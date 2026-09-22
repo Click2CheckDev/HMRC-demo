@@ -1,0 +1,4 @@
+# macOS finder metadata. Harmless, but it was committed once and this is a
+# public repository -- .DS_Store records the names of sibling files in the
+# directory it came from, which is more than a demo needs to publish.
+.DS_Store
