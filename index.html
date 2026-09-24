@@ -290,6 +290,56 @@
 
   .back-link { background: none; border: none; color: var(--muted); font-size: 13px; font-weight: 600; padding: 0; margin-bottom: 18px; display: inline-flex; align-items: center; gap: 6px; }
   .back-link:hover { color: var(--ink); }
+
+  /* Added with the consent journey -- hints under form fields, the presenter's
+     scenario selector, the consent hand-off panel and the status pills. */
+  .field-hint { font-size: 11.5px; color: var(--muted); line-height: 1.45; }
+
+  .demo-control {
+    border: 1px dashed var(--border-strong); border-radius: 4px;
+    padding: 16px 18px; margin: 0 0 28px; background: var(--bg);
+  }
+  .demo-control-label {
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 12px;
+  }
+
+  .steps { margin: 22px 0 26px; padding-left: 22px; font-size: 14px; line-height: 1.65; color: var(--ink); }
+  .steps li { margin-bottom: 11px; }
+  .steps strong { font-weight: 600; }
+
+  .link-box {
+    border: 1px solid var(--border); border-radius: 4px;
+    padding: 14px 16px; background: var(--bg); margin-bottom: 24px;
+  }
+  .link-box-label {
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 7px;
+  }
+  .link-box code { font-family: var(--font-mono); font-size: 12.5px; color: var(--brand-ink); word-break: break-all; }
+
+  .note-box {
+    border-left: 3px solid var(--border-strong); padding: 2px 0 2px 14px;
+    font-size: 13.5px; line-height: 1.6; color: var(--muted); margin: 0 0 26px;
+    text-align: left;
+  }
+  .note-box strong { color: var(--ink); font-weight: 600; }
+
+  .demo-note {
+    font-size: 11.5px; color: var(--muted); line-height: 1.5;
+    margin: 14px 0 0; font-style: italic;
+  }
+
+  .status-pill {
+    font-family: var(--font-mono); font-size: 10px; padding: 3px 8px; border-radius: 20px;
+    font-weight: 600; letter-spacing: 0.02em; white-space: nowrap;
+    background: #ececef; color: #5f5f66;
+  }
+  .status-pill.delivered,
+  .status-pill.ready { background: rgba(60,184,154,0.14); color: var(--teal-ink); }
+  .status-pill.awaiting_consent,
+  .status-pill.polling { background: rgba(224,150,30,0.16); color: #8a5a06; }
+  .status-pill.failed { background: rgba(230,23,88,0.1); color: var(--brand-ink); }
 </style>
 </head>
 <body>
@@ -345,12 +395,17 @@
         <input id="dob" type="date" required />
       </div>
       <div class="field">
-        <label>Postal code</label>
-        <input id="postalCode" required />
+        <label>National Insurance number</label>
+        <input id="niNumber" required placeholder="QQ123456C" autocomplete="off" spellcheck="false" />
+        <span class="field-hint">The key HMRC matches on. No verification is possible without it.</span>
       </div>
       <div class="field span2">
         <label>Address line 1</label>
         <input id="addressLine1" required />
+      </div>
+      <div class="field">
+        <label>Postal code</label>
+        <input id="postalCode" required />
       </div>
       <div class="field">
         <label>Query category</label>
@@ -366,7 +421,7 @@
           <option value="VOE">Verification of employment</option>
         </select>
       </div>
-      <div class="field span2">
+      <div class="field">
         <label>Permissible purpose</label>
         <select id="identifyingPurpose">
           <option value="MO">Application for mortgage</option>
@@ -374,6 +429,29 @@
           <option value="ES">Pre-employment screening</option>
           <option value="TS">Pre-tenancy screening</option>
         </select>
+      </div>
+      <div class="field">
+        <label>Email address</label>
+        <input id="email" type="email" required />
+        <span class="field-hint">Where the HMRC consent link is sent if the applicant has to authorise the request.</span>
+      </div>
+      <div class="field">
+        <label>Mobile number <span style="font-weight:400; color:var(--muted);">(optional)</span></label>
+        <input id="mobile" type="tel" />
+        <span class="field-hint">Used to text the consent link as well as emailing it.</span>
+      </div>
+    </div>
+
+    <div class="demo-control">
+      <div class="demo-control-label">Demo control &mdash; not part of the product</div>
+      <div class="field">
+        <label for="demoOutcome">Which outcome should this case take?</label>
+        <select id="demoOutcome">
+          <option value="CONSENT">HMRC consent required</option>
+          <option value="INSTANT">Instant match from payroll records</option>
+          <option value="NO_RECORD">No record found</option>
+        </select>
+        <span class="field-hint">A real case takes whichever of these three paths HMRC's records dictate &mdash; nobody chooses. This selector is here so each one can be shown on demand.</span>
       </div>
     </div>
 
@@ -388,6 +466,58 @@
       <h2 class="processing-title">Querying HMRC records…</h2>
     </div>
     <p class="subtitle" style="margin:14px auto 0; text-align:center;">Matching applicant details against payroll data. This usually takes a few seconds.</p>
+  </div>
+
+  <!-- STEP 2c: CONSENT REQUIRED -->
+  <!-- The path the demo used to skip entirely. HMRC releases nothing without
+       the applicant's own authorisation unless there is an instant payroll
+       match, so for many cases this screen, not the report, is what happens
+       next. -->
+  <div id="consent-view" class="card hidden">
+    <div class="eyebrow muted" id="consent-case-id"></div>
+    <h1 class="title">Applicant consent required</h1>
+    <p class="subtitle">There was no instant payroll match for these details, so the applicant has to authorise the data share themselves before HMRC will release any figures.</p>
+
+    <ol class="steps">
+      <li><strong>We send the applicant a consent link.</strong> <span id="consent-delivery"></span></li>
+      <li><strong>They sign in to HMRC through GOV.UK</strong> with their own Government Gateway credentials. Click2Check never sees those credentials.</li>
+      <li><strong>They approve the request.</strong> HMRC releases the payroll record and the case continues on its own &mdash; nobody has to come back and chase it.</li>
+    </ol>
+
+    <div class="link-box">
+      <div class="link-box-label">Consent link</div>
+      <code id="consent-url"></code>
+    </div>
+
+    <p class="note-box">Until then the case sits at <span class="status-pill awaiting_consent">AWAITING CONSENT</span> and is re-checked every 5 minutes for up to 24 hours. If the applicant has not consented by then it is closed as <span class="status-pill expired">EXPIRED</span> and a fresh case has to be opened.</p>
+
+    <div class="actions">
+      <button class="btn-primary" id="consent-simulate-btn">Simulate the applicant consenting</button>
+      <button class="btn-secondary" id="consent-cases-btn">Leave it pending</button>
+    </div>
+    <p class="demo-note">That first button stands in for something the applicant does on GOV.UK in their own time &mdash; minutes or hours after the case is opened, not seconds.</p>
+  </div>
+
+  <!-- STEP 2d: POLLING (consent given, waiting on HMRC) -->
+  <div id="polling-view" class="card centered hidden">
+    <div class="eyebrow muted" id="polling-case-id"></div>
+    <div class="spinner-row">
+      <span class="spinner"></span>
+      <h2 class="processing-title">Consent given &mdash; retrieving HMRC record&hellip;</h2>
+    </div>
+    <p class="subtitle" style="margin:14px auto 0; text-align:center; max-width:470px;">In the live service this is a background poll, so nobody sits and watches it. The case moves to <span class="status-pill ready">READY</span> and the broker is notified when the report lands.</p>
+  </div>
+
+  <!-- STEP 2e: NO RECORD FOUND -->
+  <div id="failed-view" class="card centered hidden">
+    <div class="eyebrow muted" id="failed-case-id"></div>
+    <h2 class="processing-title">No record found</h2>
+    <p class="subtitle" style="margin:14px auto 0; text-align:center; max-width:470px;">HMRC returned no payroll match for these details and no consent route was available for this applicant, so the case is closed as <span class="status-pill failed">FAILED</span>.</p>
+    <p class="note-box" style="max-width:470px; margin:22px auto 26px;">Most often a data-entry problem &mdash; an NI number, date of birth or surname that does not match what HMRC holds. Correcting the details and opening a new case is the normal next step.</p>
+    <div class="actions" style="justify-content:center;">
+      <button class="btn-secondary" id="failed-new-case-btn">Start a new case</button>
+      <button class="btn-primary" id="failed-cases-btn" style="flex:none;">View ABC Ltd cases</button>
+    </div>
   </div>
 
   <!-- STEP 2b: PENDING (commercial cases stop here) -->
@@ -671,6 +801,14 @@
       }), 350);
     });
   }
+  // Reserved .example TLD on purpose: unmistakably not a live URL, so this
+  // cannot be mistaken for a real consent link if the screen is photographed.
+  // The real one comes back from Equifax as
+  // additionalVerificationDetails.externalVerificationUrlForVerificationSubject.
+  function mockConsentUrl(order) {
+    return "https://verification-exchange.example/consent/" + order.transactionNumber;
+  }
+
   function simulateGetResult(order) {
     return new Promise(resolve => {
       setTimeout(() => resolve({ ...order, status: "DELIVERED", report: buildMockReport(order.payload) }), 1600);
@@ -855,7 +993,26 @@
   const formView = document.getElementById("order-form");
   const processingView = document.getElementById("processing-view");
   const pendingView = document.getElementById("pending-view");
+  const consentView = document.getElementById("consent-view");
+  const pollingView = document.getElementById("polling-view");
+  const failedView = document.getElementById("failed-view");
   const resultView = document.getElementById("result-view");
+
+  // One list, used by both the flow steps and the nav, so a new step can never
+  // be left visible underneath another one.
+  const FLOW_VIEWS = [formView, processingView, pendingView, consentView, pollingView, failedView, resultView];
+
+  function hideFlowViews() {
+    FLOW_VIEWS.forEach(v => v.classList.add("hidden"));
+  }
+
+  function showFlowView(view, caseIdElementId, order) {
+    if (caseIdElementId && order) {
+      document.getElementById(caseIdElementId).textContent = "Case \u00b7 " + order.transactionNumber.slice(0, 8);
+    }
+    hideFlowViews();
+    view.classList.remove("hidden");
+  }
 
   let currentOrder = null;
 
@@ -865,19 +1022,24 @@
       firstName: document.getElementById("firstName").value,
       lastName: document.getElementById("lastName").value,
       dob: document.getElementById("dob").value,
+      // Normalised the way the gateway normalises it, so "jt 12 34 56 c" and
+      // "JT123456C" are the same applicant.
+      niNumber: document.getElementById("niNumber").value.replace(/\s+/g, "").toUpperCase(),
       addressLine1: document.getElementById("addressLine1").value,
       postalCode: document.getElementById("postalCode").value,
+      email: document.getElementById("email").value,
+      mobile: document.getElementById("mobile").value,
       queryCategory: document.getElementById("queryCategory").value,
       verificationType: document.getElementById("verificationType").value,
       identifyingPurpose: document.getElementById("identifyingPurpose").value,
     };
+    const outcome = document.getElementById("demoOutcome").value;
 
-    formView.classList.add("hidden");
-    processingView.classList.remove("hidden");
+    showFlowView(processingView);
 
     const created = await simulateCreateOrder(payload);
     currentOrder = created;
-    document.getElementById("processing-case-id").textContent = "Case · " + created.transactionNumber.slice(0, 8);
+    document.getElementById("processing-case-id").textContent = "Case \u00b7 " + created.transactionNumber.slice(0, 8);
 
     // Business rule: commercial cases stay pending -- not yet supported
     // end-to-end, so they never reach a delivered report in this demo.
@@ -885,9 +1047,36 @@
       await new Promise(r => setTimeout(r, 900));
       currentOrder = { ...created, status: "PENDING" };
       addCaseToPortal(currentOrder);
-      document.getElementById("pending-case-id").textContent = "Case · " + created.transactionNumber.slice(0, 8);
-      processingView.classList.add("hidden");
-      pendingView.classList.remove("hidden");
+      showFlowView(pendingView, "pending-case-id", currentOrder);
+      return;
+    }
+
+    // No payroll match and no consent route -- a terminal failure, and the
+    // wording is the gateway's own error_detail for this case.
+    if (outcome === "NO_RECORD") {
+      await new Promise(r => setTimeout(r, 900));
+      currentOrder = {
+        ...created,
+        status: "FAILED",
+        errorDetail: "No record found and no HMRC waterfall available",
+      };
+      addCaseToPortal(currentOrder);
+      showFlowView(failedView, "failed-case-id", currentOrder);
+      return;
+    }
+
+    // The common case the demo used to hide: HMRC hands back a consent link
+    // and nothing further happens until the applicant acts on it.
+    if (outcome === "CONSENT") {
+      await new Promise(r => setTimeout(r, 900));
+      currentOrder = {
+        ...created,
+        status: "AWAITING_CONSENT",
+        consentUrl: mockConsentUrl(created),
+      };
+      addCaseToPortal(currentOrder);
+      renderConsent(currentOrder);
+      showFlowView(consentView, "consent-case-id", currentOrder);
       return;
     }
 
@@ -895,10 +1084,17 @@
     currentOrder = delivered;
     addCaseToPortal(delivered);
     renderResult(delivered);
-
-    processingView.classList.add("hidden");
-    resultView.classList.remove("hidden");
+    showFlowView(resultView, "result-case-id", delivered);
   });
+
+  function renderConsent(order) {
+    const { payload } = order;
+    const delivery = payload.mobile
+      ? "Emailed to " + payload.email + " and texted to " + payload.mobile + "."
+      : "Emailed to " + payload.email + ".";
+    document.getElementById("consent-delivery").textContent = delivery;
+    document.getElementById("consent-url").textContent = order.consentUrl;
+  }
 
   function renderPayrollEmployersHtml(report) {
     return report.employers.map(entry => `
@@ -992,12 +1188,48 @@
     showView("portal");
   });
 
+  document.getElementById("failed-new-case-btn").addEventListener("click", () => {
+    formView.reset();
+    currentOrder = null;
+    showView("new-case");
+  });
+  document.getElementById("failed-cases-btn").addEventListener("click", () => {
+    showView("portal");
+  });
+
+  document.getElementById("consent-cases-btn").addEventListener("click", () => {
+    showView("portal");
+  });
+
+  document.getElementById("consent-simulate-btn").addEventListener("click", async () => {
+    // Guarded: the nav can move away from this screen and back, and consenting
+    // twice on a case that has already moved on would be nonsense.
+    if (!currentOrder || currentOrder.status !== "AWAITING_CONSENT") return;
+
+    const polling = { ...currentOrder, status: "POLLING" };
+    currentOrder = polling;
+    updateCaseInPortal(polling);
+    showFlowView(pollingView, "polling-case-id", polling);
+
+    const delivered = await simulateGetResult(polling);
+    currentOrder = delivered;
+    updateCaseInPortal(delivered);
+    renderResult(delivered);
+    showFlowView(resultView, "result-case-id", delivered);
+  });
+
   // ---------- Client portal (ABC Ltd) ----------
   const APPLICANTS = [
     "Test1 User", "Test2 User", "Test3 User", "Test4 User", "Test5 User",
     "Test6 User", "Test7 User", "Test8 User",
   ];
-  const STATUSES = ["DELIVERED", "DELIVERED", "DELIVERED", "AWAITING_CONSENT"];
+  // Indices 0, 3 and 6 are overridden to COMMERCIAL/PENDING below, so the
+  // spread a viewer actually sees is DELIVERED, AWAITING_CONSENT, FAILED and
+  // EXPIRED -- the demo used to show nothing but successes.
+  const STATUSES = [
+    "DELIVERED", "DELIVERED", "AWAITING_CONSENT", "DELIVERED",
+    "FAILED", "EXPIRED", "DELIVERED", "DELIVERED",
+  ];
 
   function buildMockCaseList(count) {
     const PURPOSES = ["MO", "CC", "ES", "TS"];
@@ -1011,8 +1243,13 @@
       const payload = {
         firstName, lastName,
         dob: "1990-0" + ((i % 9) + 1) + "-14",
+        // QQ is a prefix HMRC never issues, and 07700 900xxx is Ofcom's
+        // reserved drama range -- neither can belong to a real person.
+        niNumber: "QQ" + (123400 + i) + "C",
         addressLine1: (12 + i) + " Quayside",
         postalCode: "NE1 " + (1 + i) + "AQ",
+        email: firstName.toLowerCase() + "." + lastName.toLowerCase() + "@example.com",
+        mobile: "07700 900" + (100 + i),
         queryCategory: category,
         verificationType: i % 2 === 0 ? "VOI" : "VOE",
         identifyingPurpose: PURPOSES[i % PURPOSES.length],
@@ -1023,6 +1260,7 @@
         createdAt: d.toISOString(),
         payload,
         status,
+        errorDetail: status === "FAILED" ? "No record found and no HMRC waterfall available" : "",
         report: status === "DELIVERED" ? buildMockReport(payload) : null,
       };
       return order;
@@ -1058,6 +1296,18 @@
     saveCasesToStorage();
   }
 
+  // A case is now added while it is still awaiting consent and finished later,
+  // so the list entry has to be updated in place rather than appended again.
+  function updateCaseInPortal(order) {
+    const idx = portalCases.findIndex(c => c.id === order.id);
+    if (idx === -1) {
+      addCaseToPortal(order);
+      return;
+    }
+    portalCases[idx] = { ...order, __isSaved: true };
+    saveCasesToStorage();
+  }
+
   // Saved cases (from a previous visit) show first, then the built-in demo cases.
   const portalCases = [...loadSavedCases(), ...buildMockCaseList(8)];
 
@@ -1074,7 +1324,7 @@
       <tr data-idx="${idx}">
         <td>${c.payload.firstName} ${c.payload.lastName}</td>
         <td><span class="cat-pill ${c.payload.queryCategory.toLowerCase()}">${c.payload.queryCategory}</span></td>
-        <td>${(c.status || "UNKNOWN").replace("_", " ")}</td>
+        <td><span class="status-pill ${(c.status || "unknown").toLowerCase()}">${(c.status || "UNKNOWN").replace(/_/g, " ")}</span></td>
         <td class="mono">${c.transactionNumber.slice(0, 12)}…</td>
         <td>${new Date(c.createdAt).toLocaleDateString("en-GB")}</td>
       </tr>
@@ -1086,8 +1336,31 @@
   }
 
   function openCaseDetail(order) {
+    // A case waiting on the applicant reopens its consent screen rather than
+    // refusing to open. A broker needs to see the link again to resend it, and
+    // without this there is no way back to a case left pending.
+    if (order.status === "AWAITING_CONSENT") {
+      // Seeded cases have no link until someone looks at them.
+      if (!order.consentUrl) {
+        order.consentUrl = mockConsentUrl(order);
+        updateCaseInPortal(order);
+      }
+      currentOrder = order;
+      renderConsent(order);
+      portalView.classList.add("hidden");
+      portalDetailView.classList.add("hidden");
+      showFlowView(consentView, "consent-case-id", order);
+      pageTitle.textContent = "Case \u00b7 " + order.payload.firstName + " " + order.payload.lastName;
+      return;
+    }
+
     if (!order.report) {
-      alert("This case is still " + order.status.replace("_", " ").toLowerCase() + " — no report yet.");
+      // "still awaiting consent" reads fine; "still failed" does not, and
+      // a failed case has a reason worth showing.
+      const label = (order.status || "unknown").replace(/_/g, " ").toLowerCase();
+      alert(order.errorDetail
+        ? "This case is " + label + ": " + order.errorDetail
+        : "This case is " + label + " — there is no report to open yet.");
       return;
     }
     const { payload, report } = order;
@@ -1125,7 +1398,12 @@
   const PAGE_TITLES = { "portal": "ABC Ltd cases", "new-case": "New case" };
 
   function showView(view) {
-    [formView, processingView, pendingView, resultView, portalView, portalDetailView].forEach(v => v.classList.add("hidden"));
+    // Navigating away abandons whatever case was mid-flow. Without this the
+    // consent button stays armed against a case the user has already left,
+    // and a stray click drops a finished report on top of the new-case form.
+    currentOrder = null;
+    hideFlowViews();
+    [portalView, portalDetailView].forEach(v => v.classList.add("hidden"));
     navBtns.forEach(b => b.classList.toggle("active", b.dataset.view === view));
     pageTitle.textContent = PAGE_TITLES[view] || "";
 
