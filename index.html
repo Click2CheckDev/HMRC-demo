@@ -340,6 +340,35 @@
   .status-pill.awaiting_consent,
   .status-pill.polling { background: rgba(224,150,30,0.16); color: #8a5a06; }
   .status-pill.failed { background: rgba(230,23,88,0.1); color: var(--brand-ink); }
+  .status-pill.lg { font-size: 11.5px; padding: 5px 11px; }
+
+  /* Case detail: header, the summary grid, and the status panels that stand in
+     for what the real portal shows on a case that is not finished. */
+  .detail-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+  .detail-head h1 { margin: 0; font-size: 24px; }
+
+  .detail-grid {
+    display: grid; grid-template-columns: auto 1fr; gap: 8px 20px;
+    margin: 0 0 26px; font-size: 13.5px;
+  }
+  .detail-grid dt { color: var(--muted); }
+  .detail-grid dd { margin: 0; color: var(--ink); }
+
+  .panel {
+    border: 1px solid var(--border); border-radius: 4px; background: var(--bg);
+    padding: 16px 18px; margin-bottom: 24px; font-size: 13.5px; line-height: 1.6;
+  }
+  .panel.danger { border-color: rgba(230,23,88,0.3); background: rgba(230,23,88,0.04); }
+  .panel p { margin: 0 0 10px; }
+  .panel p:last-child { margin-bottom: 0; }
+  .panel .panel-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+  .panel .btn-secondary, .panel .btn-primary { padding: 9px 16px; font-size: 13px; }
+  .panel code { font-family: var(--font-mono); font-size: 12px; color: var(--brand-ink); word-break: break-all; }
+  .panel .note { font-size: 11.5px; color: var(--muted); font-style: italic; }
+
+  .filter-row { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; font-size: 13px; }
+  .filter-row label { color: var(--muted); }
+  .filter-row select { font: inherit; font-size: 13px; padding: 6px 10px; border-radius: 3px; border: 1px solid var(--border-strong); background: var(--surface); }
 </style>
 </head>
 <body>
@@ -439,6 +468,16 @@
         <label>Mobile number <span style="font-weight:400; color:var(--muted);">(optional)</span></label>
         <input id="mobile" type="tel" />
         <span class="field-hint">Used to text the consent link as well as emailing it.</span>
+      </div>
+      <div class="field">
+        <label>Your reference <span style="font-weight:400; color:var(--muted);">(optional)</span></label>
+        <input id="customerReference" />
+        <span class="field-hint">Your own case number. Passed through untouched and printed on the report.</span>
+      </div>
+      <div class="field">
+        <label>Employer name <span style="font-weight:400; color:var(--muted);">(optional)</span></label>
+        <input id="employerName" />
+        <span class="field-hint">What the applicant says. The report shows it beside what HMRC's records actually hold.</span>
       </div>
     </div>
 
@@ -554,7 +593,7 @@
       <div class="row"><span class="label">Name</span><span class="value" id="r-name"></span></div>
       <div class="row"><span class="label">Date of Birth</span><span class="value" id="r-dob"></span></div>
       <div class="row"><span class="label">Address</span><span class="value" id="r-address"></span></div>
-      <div class="row"><span class="label">Current Employment -- Employer Name</span><span class="value">-</span></div>
+      <div class="row"><span class="label">Current Employment -- Employer Name</span><span class="value" id="r-employer">-</span></div>
       <div class="row"><span class="label">Current Employment -- Work Email</span><span class="value">-</span></div>
       <div class="row"><span class="label">Current Employment -- Work Phone Number</span><span class="value">-</span></div>
     </div>
@@ -618,6 +657,16 @@
       </div>
     </div>
 
+    <div class="filter-row">
+      <label for="category-filter">Category</label>
+      <select id="category-filter">
+        <option value="">All</option>
+        <option value="RESIDENTIAL">Residential</option>
+        <option value="COMMERCIAL">Commercial</option>
+      </select>
+      <span class="muted" id="filter-count"></span>
+    </div>
+
     <table class="case-table">
       <thead>
         <tr><th>Applicant</th><th>Category</th><th>Status</th><th>Tracking Number</th><th>Opened</th></tr>
@@ -630,15 +679,59 @@
   <div id="portal-detail-view" class="card wide report-card hidden">
     <button class="back-link" id="portal-back-btn">&larr; Back to ABC Ltd cases</button>
 
-    <div class="eyebrow muted" id="pd-case-id"></div>
-    <h1 class="title">Employment Income Verification <span style="color:var(--muted); font-size:0.5em; font-weight:400;">(DEMO)</span></h1>
+    <div class="detail-head">
+      <div>
+        <div class="eyebrow muted" id="pd-case-id"></div>
+        <h1 class="title" id="pd-applicant"></h1>
+      </div>
+      <span class="status-pill lg" id="pd-status"></span>
+    </div>
 
+    <dl class="detail-grid">
+      <dt>Permissible purpose</dt><dd id="pd-sum-purpose"></dd>
+      <dt>Verification type</dt><dd id="pd-sum-type"></dd>
+      <dt>Category</dt><dd id="pd-sum-category"></dd>
+      <dt>Opened</dt><dd id="pd-sum-opened"></dd>
+      <dt>Tracking number</dt><dd class="mono" id="pd-sum-tracking"></dd>
+    </dl>
+
+    <!-- Waiting on the applicant, or on HMRC. The real portal shows the consent
+         link here so a broker can resend it, and a refresh to pick up whatever
+         the background poll has found. -->
+    <div class="panel hidden" id="pd-pending-panel">
+      <p id="pd-pending-text"></p>
+      <p id="pd-consent-line" class="hidden">Send this link to the applicant so they can authenticate with HMRC:<br/><code id="pd-consent-url"></code></p>
+      <p id="pd-pending-detail" class="note"></p>
+      <div class="panel-actions">
+        <button class="btn-secondary" id="pd-refresh-btn">Refresh status</button>
+        <button class="btn-primary" id="pd-consent-btn">Simulate the applicant consenting</button>
+      </div>
+      <p class="note" id="pd-refresh-note"></p>
+    </div>
+
+    <!-- Automatic polling gave up. POST /orders/<id>/refresh/ restarts it, and
+         only works on an expired order -- it 400s on anything else. -->
+    <div class="panel danger hidden" id="pd-expired-panel">
+      <p>Automatic checking gave up after 24 hours with no response from HMRC. Resume it manually if you still expect this case to complete.</p>
+      <div class="panel-actions">
+        <button class="btn-secondary" id="pd-resume-btn">Resume checking</button>
+      </div>
+    </div>
+
+    <div class="panel danger hidden" id="pd-failed-panel">
+      <p id="pd-failed-text"></p>
+      <div class="panel-actions">
+        <button class="btn-secondary" id="pd-failed-new-btn">Start a corrected case</button>
+      </div>
+    </div>
+
+    <div id="pd-report-panel" class="hidden">
     <div class="section">
       <h2>Order Information</h2>
       <div class="row"><span class="label">Report Date</span><span class="value" id="pd-report-date"></span></div>
       <div class="row"><span class="label">Permissible Purpose</span><span class="value" id="pd-purpose"></span></div>
       <div class="row"><span class="label">Tracking Number</span><span class="value mono" id="pd-tracking"></span></div>
-      <div class="row"><span class="label">Customer Reference Number</span><span class="value">-</span></div>
+      <div class="row"><span class="label">Customer Reference Number</span><span class="value" id="pd-refnum">-</span></div>
     </div>
 
     <div class="section">
@@ -647,7 +740,7 @@
       <div class="row"><span class="label">Name</span><span class="value" id="pd-name"></span></div>
       <div class="row"><span class="label">Date of Birth</span><span class="value" id="pd-dob"></span></div>
       <div class="row"><span class="label">Address</span><span class="value" id="pd-address"></span></div>
-      <div class="row"><span class="label">Current Employment -- Employer Name</span><span class="value">-</span></div>
+      <div class="row"><span class="label">Current Employment -- Employer Name</span><span class="value" id="pd-employer">-</span></div>
       <div class="row"><span class="label">Current Employment -- Work Email</span><span class="value">-</span></div>
       <div class="row"><span class="label">Current Employment -- Work Phone Number</span><span class="value">-</span></div>
     </div>
@@ -682,6 +775,7 @@
 
     <div class="actions">
       <button class="btn-primary" id="pd-download-btn">Download PDF</button>
+    </div>
     </div>
   </div>
 
@@ -852,7 +946,7 @@
         ["Report Date", new Date(order.createdAt).toLocaleString("en-GB")],
         ["Permissible Purpose", purposeLabel],
         ["Tracking Number", order.transactionNumber],
-        ["Customer Reference Number", "-"],
+        ["Customer Reference Number", order.payload.customerReference || "-"],
       ],
     });
     y = doc.lastAutoTable.finalY + 22;
@@ -869,7 +963,7 @@
         ["Name", order.payload.firstName + " " + order.payload.lastName],
         ["Date of Birth", new Date(order.payload.dob).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })],
         ["Address", order.payload.addressLine1 + ", " + order.payload.postalCode],
-        ["Current Employment -- Employer Name", "-"],
+        ["Current Employment -- Employer Name", order.payload.employerName || "-"],
         ["Current Employment -- Work Email", "-"],
         ["Current Employment -- Work Phone Number", "-"],
       ],
@@ -1029,6 +1123,8 @@
       postalCode: document.getElementById("postalCode").value,
       email: document.getElementById("email").value,
       mobile: document.getElementById("mobile").value,
+      customerReference: document.getElementById("customerReference").value,
+      employerName: document.getElementById("employerName").value,
       queryCategory: document.getElementById("queryCategory").value,
       verificationType: document.getElementById("verificationType").value,
       identifyingPurpose: document.getElementById("identifyingPurpose").value,
@@ -1160,6 +1256,8 @@
     document.getElementById("r-name").textContent = payload.firstName + " " + payload.lastName;
     document.getElementById("r-dob").textContent = new Date(payload.dob).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
     document.getElementById("r-address").textContent = payload.addressLine1 + ", " + payload.postalCode;
+    document.getElementById("r-refnum").textContent = payload.customerReference || "-";
+    document.getElementById("r-employer").textContent = payload.employerName || "-";
     document.getElementById("r-retrieved-name").textContent = report.retrievedName;
     document.getElementById("r-retrieved-address").textContent = report.retrievedAddress;
 
@@ -1226,18 +1324,39 @@
   // Indices 0, 3 and 6 are overridden to COMMERCIAL/PENDING below, so the
   // spread a viewer actually sees is DELIVERED, AWAITING_CONSENT, FAILED and
   // EXPIRED -- the demo used to show nothing but successes.
-  const STATUSES = [
-    "DELIVERED", "DELIVERED", "AWAITING_CONSENT", "DELIVERED",
-    "FAILED", "EXPIRED", "DELIVERED", "DELIVERED",
+  // Written out rather than computed. An earlier version derived the category
+  // from i % 3 and the status from STATUSES[i % 8], and adding POLLING and READY
+  // to that list silently removed every DELIVERED case -- the list ended up with
+  // no finished report in it, which is the main thing the demo exists to show.
+  //
+  // Every status the gateway can put an order in appears here. DELIVERED appears
+  // most often because that is what a working account mostly looks like.
+  const SEEDED_CASES = [
+    { category: "COMMERCIAL",  status: "PENDING" },
+    { category: "RESIDENTIAL", status: "DELIVERED" },
+    { category: "RESIDENTIAL", status: "AWAITING_CONSENT" },
+    { category: "COMMERCIAL",  status: "PENDING" },
+    { category: "RESIDENTIAL", status: "DELIVERED" },
+    { category: "RESIDENTIAL", status: "POLLING" },
+    { category: "RESIDENTIAL", status: "FAILED" },
+    { category: "RESIDENTIAL", status: "READY" },
+    { category: "COMMERCIAL",  status: "PENDING" },
+    { category: "RESIDENTIAL", status: "EXPIRED" },
+    { category: "RESIDENTIAL", status: "DELIVERED" },
   ];
 
-  function buildMockCaseList(count) {
+  // Statuses where the case is still moving and there is nothing to read yet.
+  // Mirrors isPendingStatus() in the real frontend.
+  const PENDING_STATUSES = ["PENDING", "AWAITING_CONSENT", "POLLING", "READY"];
+
+  function buildMockCaseList() {
     const PURPOSES = ["MO", "CC", "ES", "TS"];
-    return Array.from({ length: count }, (_, i) => {
+    return SEEDED_CASES.map((seed, i) => {
       const [firstName, lastName] = APPLICANTS[i % APPLICANTS.length].split(" ");
-      const category = i % 3 === 0 ? "COMMERCIAL" : "RESIDENTIAL";
-      // Business rule: commercial cases always show as pending -- not yet supported end-to-end.
-      const status = category === "COMMERCIAL" ? "PENDING" : STATUSES[i % STATUSES.length];
+      const category = seed.category;
+      // Business rule: commercial cases stay pending -- not yet supported
+      // end-to-end. The table above keeps that consistent with the form.
+      const status = seed.status;
       const d = new Date();
       d.setDate(d.getDate() - i * 3 - 1);
       const payload = {
@@ -1246,6 +1365,8 @@
         // QQ is a prefix HMRC never issues, and 07700 900xxx is Ofcom's
         // reserved drama range -- neither can belong to a real person.
         niNumber: "QQ" + (123400 + i) + "C",
+        customerReference: "ABC-" + (1040 + i),
+        employerName: ["KarolReality", "KAROLINA HEREY LTD", ""][i % 3],
         addressLine1: (12 + i) + " Quayside",
         postalCode: "NE1 " + (1 + i) + "AQ",
         email: firstName.toLowerCase() + "." + lastName.toLowerCase() + "@example.com",
@@ -1309,9 +1430,12 @@
   }
 
   // Saved cases (from a previous visit) show first, then the built-in demo cases.
-  const portalCases = [...loadSavedCases(), ...buildMockCaseList(8)];
+  const portalCases = [...loadSavedCases(), ...buildMockCaseList()];
 
   function renderPortalList() {
+    // The totals are the whole account, not the filtered view -- they stand in
+    // for GET /clients/usage/, which counts every order regardless of what the
+    // list happens to be showing.
     const total = portalCases.length;
     const commercial = portalCases.filter(c => c.payload.queryCategory === "COMMERCIAL").length;
     const residential = total - commercial;
@@ -1319,8 +1443,17 @@
     document.getElementById("stat-commercial").textContent = commercial;
     document.getElementById("stat-residential").textContent = residential;
 
+    // Mirrors ?query_category= on GET /orders/.
+    const filter = document.getElementById("category-filter").value;
+    const shown = filter
+      ? portalCases.filter(c => c.payload.queryCategory === filter)
+      : portalCases;
+
+    document.getElementById("filter-count").textContent =
+      filter ? `showing ${shown.length} of ${total}` : "";
+
     const tbody = document.getElementById("portal-case-list");
-    tbody.innerHTML = portalCases.map((c, idx) => `
+    tbody.innerHTML = shown.map((c, idx) => `
       <tr data-idx="${idx}">
         <td>${c.payload.firstName} ${c.payload.lastName}</td>
         <td><span class="cat-pill ${c.payload.queryCategory.toLowerCase()}">${c.payload.queryCategory}</span></td>
@@ -1331,39 +1464,88 @@
     `).join("");
 
     tbody.querySelectorAll("tr").forEach(tr => {
-      tr.addEventListener("click", () => openCaseDetail(portalCases[tr.dataset.idx]));
+      // Indexes into the filtered list, not the full one.
+      tr.addEventListener("click", () => openCaseDetail(shown[tr.dataset.idx]));
     });
   }
 
+  document.getElementById("category-filter").addEventListener("change", renderPortalList);
+
+  const PENDING_TEXT = {
+    PENDING: "This case has been submitted and is waiting to be picked up.",
+    AWAITING_CONSENT: "This case is waiting for the applicant to authorise the data share with HMRC.",
+    POLLING: "The applicant has consented. We are waiting for HMRC to release the record.",
+    READY: "HMRC has released the record. The report is being retrieved.",
+  };
+
+  // Which case the detail view is currently showing. Separate from currentOrder,
+  // which tracks the new-case flow -- the two are different journeys and sharing
+  // one variable is how a stale consent click once landed on the wrong screen.
+  let detailOrder = null;
+
   function openCaseDetail(order) {
-    // A case waiting on the applicant reopens its consent screen rather than
-    // refusing to open. A broker needs to see the link again to resend it, and
-    // without this there is no way back to a case left pending.
-    if (order.status === "AWAITING_CONSENT") {
-      // Seeded cases have no link until someone looks at them.
-      if (!order.consentUrl) {
+    // Every status opens. Previously anything without a report raised an
+    // alert(), so a broker could not look at a case that was still running --
+    // which is most of them, and exactly when they would want to look.
+    detailOrder = order;
+    const { payload } = order;
+    const status = order.status || "UNKNOWN";
+
+    document.getElementById("pd-applicant").textContent = payload.firstName + " " + payload.lastName;
+    const pill = document.getElementById("pd-status");
+    pill.className = "status-pill lg " + status.toLowerCase();
+    pill.textContent = status.replace(/_/g, " ");
+
+    document.getElementById("pd-sum-purpose").textContent = PURPOSE_LABELS[payload.identifyingPurpose] || payload.identifyingPurpose;
+    document.getElementById("pd-sum-type").textContent =
+      payload.verificationType === "VOI" ? "Verification of income" : "Verification of employment";
+    document.getElementById("pd-sum-category").textContent = payload.queryCategory;
+    document.getElementById("pd-sum-opened").textContent = new Date(order.createdAt).toLocaleString("en-GB");
+    document.getElementById("pd-sum-tracking").textContent = order.transactionNumber;
+
+    const pending = document.getElementById("pd-pending-panel");
+    const expired = document.getElementById("pd-expired-panel");
+    const failed = document.getElementById("pd-failed-panel");
+    const reportPanel = document.getElementById("pd-report-panel");
+    [pending, expired, failed, reportPanel].forEach(p => p.classList.add("hidden"));
+    document.getElementById("pd-refresh-note").textContent = "";
+
+    if (PENDING_STATUSES.includes(status)) {
+      document.getElementById("pd-pending-text").textContent = PENDING_TEXT[status] || "This case is still being processed.";
+
+      // A seeded case has no link until somebody looks at it.
+      const wantsConsent = status === "AWAITING_CONSENT";
+      if (wantsConsent && !order.consentUrl) {
         order.consentUrl = mockConsentUrl(order);
         updateCaseInPortal(order);
       }
-      currentOrder = order;
-      renderConsent(order);
-      portalView.classList.add("hidden");
-      portalDetailView.classList.add("hidden");
-      showFlowView(consentView, "consent-case-id", order);
-      pageTitle.textContent = "Case \u00b7 " + order.payload.firstName + " " + order.payload.lastName;
-      return;
+      const consentLine = document.getElementById("pd-consent-line");
+      consentLine.classList.toggle("hidden", !order.consentUrl);
+      if (order.consentUrl) document.getElementById("pd-consent-url").textContent = order.consentUrl;
+
+      document.getElementById("pd-pending-detail").textContent =
+        "Re-checked automatically every 5 minutes for up to 24 hours, then closed as EXPIRED.";
+      // Only offer to consent on a case that is actually waiting for it.
+      document.getElementById("pd-consent-btn").classList.toggle("hidden", !wantsConsent);
+      pending.classList.remove("hidden");
+    } else if (status === "EXPIRED") {
+      expired.classList.remove("hidden");
+    } else if (status === "FAILED") {
+      document.getElementById("pd-failed-text").textContent =
+        order.errorDetail || "This case failed with no further detail.";
+      failed.classList.remove("hidden");
     }
 
-    if (!order.report) {
-      // "still awaiting consent" reads fine; "still failed" does not, and
-      // a failed case has a reason worth showing.
-      const label = (order.status || "unknown").replace(/_/g, " ").toLowerCase();
-      alert(order.errorDetail
-        ? "This case is " + label + ": " + order.errorDetail
-        : "This case is " + label + " — there is no report to open yet.");
-      return;
-    }
+    if (order.report) renderCaseReport(order);
+
+    portalView.classList.add("hidden");
+    portalDetailView.classList.remove("hidden");
+    pageTitle.textContent = "Case \u00b7 " + payload.firstName + " " + payload.lastName;
+  }
+
+  function renderCaseReport(order) {
     const { payload, report } = order;
+    document.getElementById("pd-report-panel").classList.remove("hidden");
     document.getElementById("pd-case-id").textContent = "Case · " + order.transactionNumber.slice(0, 8);
     document.getElementById("pd-report-date").textContent = new Date(order.createdAt).toLocaleString("en-GB");
     document.getElementById("pd-purpose").textContent = PURPOSE_LABELS[payload.identifyingPurpose] || payload.identifyingPurpose;
@@ -1379,12 +1561,74 @@
     document.getElementById("pd-other-income").innerHTML = renderOtherIncomeHtml(report.otherIncome);
     document.getElementById("pd-taxes-paid").innerHTML = renderTaxesPaidHtml(report.taxesPaid);
 
+    document.getElementById("pd-refnum").textContent = payload.customerReference || "-";
+    document.getElementById("pd-employer").textContent = payload.employerName || "-";
     document.getElementById("pd-download-btn").onclick = () => downloadReportPdf(order);
-
-    portalView.classList.add("hidden");
-    portalDetailView.classList.remove("hidden");
-    pageTitle.textContent = "Case · " + order.payload.firstName + " " + order.payload.lastName;
   }
+
+  // ---------- Case detail actions ----------
+
+  function reopenDetail() {
+    renderPortalList();
+    openCaseDetail(detailOrder);
+  }
+
+  document.getElementById("pd-refresh-btn").addEventListener("click", () => {
+    // A refresh reads state; it does not create it. Saying "no change yet" is
+    // the honest answer almost every time, and it is what a broker will see.
+    if (!detailOrder) return;
+    document.getElementById("pd-refresh-note").textContent =
+      "Checked just now \u2014 no change yet. The applicant has not completed HMRC consent.";
+  });
+
+  document.getElementById("pd-consent-btn").addEventListener("click", async () => {
+    if (!detailOrder || detailOrder.status !== "AWAITING_CONSENT") return;
+
+    // Consent given: the gateway moves the order through POLLING and READY
+    // before the report exists. Shown as real steps rather than skipped.
+    detailOrder = { ...detailOrder, status: "POLLING" };
+    updateCaseInPortal(detailOrder);
+    reopenDetail();
+
+    await new Promise(r => setTimeout(r, 1100));
+    detailOrder = { ...detailOrder, status: "READY" };
+    updateCaseInPortal(detailOrder);
+    reopenDetail();
+
+    const delivered = await simulateGetResult(detailOrder);
+    detailOrder = delivered;
+    updateCaseInPortal(delivered);
+    reopenDetail();
+  });
+
+  document.getElementById("pd-resume-btn").addEventListener("click", () => {
+    // POST /orders/<id>/refresh/ -- valid only on an EXPIRED order, which is
+    // why this button exists nowhere else. It clears the error and restarts
+    // polling rather than producing a report.
+    if (!detailOrder || detailOrder.status !== "EXPIRED") return;
+    detailOrder = { ...detailOrder, status: "POLLING", errorDetail: "" };
+    updateCaseInPortal(detailOrder);
+    reopenDetail();
+  });
+
+  document.getElementById("pd-failed-new-btn").addEventListener("click", () => {
+    // Most failures are a mistyped NI number or date of birth, so the useful
+    // next step is a fresh case pre-filled with what was entered.
+    const p = detailOrder && detailOrder.payload;
+    showView("new-case");
+    if (!p) return;
+    const fill = {
+      firstName: p.firstName, lastName: p.lastName, dob: p.dob,
+      niNumber: p.niNumber, addressLine1: p.addressLine1, postalCode: p.postalCode,
+      email: p.email, mobile: p.mobile, customerReference: p.customerReference,
+      employerName: p.employerName, queryCategory: p.queryCategory,
+      verificationType: p.verificationType, identifyingPurpose: p.identifyingPurpose,
+    };
+    Object.entries(fill).forEach(([id, value]) => {
+      const el = document.getElementById(id);
+      if (el) el.value = value || "";
+    });
+  });
 
   document.getElementById("portal-back-btn").addEventListener("click", () => {
     showView("portal");
