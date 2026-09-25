@@ -24,7 +24,7 @@ The case list seeds one of each, so all of them can be shown:
 
 | Status | What it means |
 |---|---|
-| `PENDING` | not yet submitted to HMRC — see below, it means two different things |
+| `PENDING` | created, not yet submitted to Equifax — seconds, in the live service |
 | `AWAITING CONSENT` | waiting for the applicant to authorise at HMRC |
 | `POLLING` | consent given, waiting for HMRC to release the record |
 | `READY` | HMRC has released it; the report is being retrieved |
@@ -32,16 +32,11 @@ The case list seeds one of each, so all of them can be shown:
 | `FAILED` | no payroll match and no consent route |
 | `EXPIRED` | 24 hours passed with no response |
 
-`PENDING` covers two unrelated situations, and the demo now says which:
-
-- **A commercial case** is held for manual review before anything is sent to
-  HMRC. Nothing is being polled, because nothing has been submitted. The review
-  is a step outside the system, so a button stands in for someone completing it
-  — the same arrangement as the applicant consenting on GOV.UK.
-- **A residential case** is simply waiting for a worker to pick it up, which in
-  the live service takes seconds. A case appears in the list at `PENDING` the
-  moment it is created, before Equifax has been called at all, which is exactly
-  what the real API does.
+`PENDING` means one thing: created, and waiting for a worker to submit it to
+Equifax. In the live service that is seconds, which is why only one is seeded.
+A case appears in the list at `PENDING` the moment it is created, before Equifax
+has been called at all — exactly what the real API does. Nothing is being polled
+at that point, so no refresh is offered.
 
 Opening a case shows what a broker can actually do about it at that point:
 
@@ -60,24 +55,38 @@ Refreshing honestly reports no change. It reads state; it does not invent it —
 and on a case that has not been submitted yet there is nothing to refresh, so the
 button is not offered at all.
 
-A commercial case can now be followed all the way through: held for review, then
-submitted, then consent, then polling, then ready, then a delivered report. It
-used to stop at the review and have no way forward.
+A case can be followed all the way through from the list: pending, submitted,
+consent, polling, ready, delivered report.
 
 ### The three outcomes
 
 A real case ends up on one of three paths, and nobody chooses which:
 
-- **Instant match** — HMRC already holds a payroll match, and the report comes
-  back in seconds with no involvement from the applicant.
-- **Consent required** — the usual alternative. The applicant is sent a link,
-  signs in to HMRC through GOV.UK with their own Government Gateway
-  credentials, and authorises the data share. Only then is the record released.
-  Until they act, the case sits at `AWAITING CONSENT` and is re-checked every
-  five minutes for up to 24 hours, after which it is closed as `EXPIRED`.
-- **No record found** — no payroll match and no consent route, so the case is
-  closed as `FAILED`. Usually an NI number, date of birth or surname that does
-  not match what HMRC holds.
+- **Found at Equifax** — Equifax already holds the person in its own payroll
+  data, and the report comes back in seconds with no involvement from the
+  applicant.
+- **Forwarded to HMRC** — Equifax does not hold them, so the request goes to
+  HMRC instead and the person is identified through the **Government Gateway**.
+  They are sent a link, sign in with their own credentials, and authorise the
+  data share. Until they act, the case sits at `AWAITING CONSENT` and is
+  re-checked every five minutes for up to 24 hours, after which it is closed as
+  `EXPIRED`.
+- **Not found either way** — neither Equifax's payroll data nor the HMRC route
+  produces a match, so the case is closed as `FAILED`. Usually an NI number,
+  date of birth or surname that does not match what is held.
+
+### Residential and Commercial are the same thing
+
+Worth stating plainly, because an earlier version of this demo said otherwise.
+`query_category` is a reporting label. It is **never sent to Equifax**, nothing in
+the gateway branches on it, and a commercial case is processed exactly like a
+residential one. Its only jobs are filtering the case list and splitting the
+counts on the usage endpoint for billing.
+
+There is **no manual review**. An earlier version of this demo held commercial
+cases at "pending review" and never produced a report for them, which was
+invented rather than observed. It has been removed, and commercial cases now
+appear across the same statuses as residential ones.
 
 The **demo control** on the new-case form picks which one to show. It is
 labelled as a demo control on screen and is deliberately not styled to look
@@ -102,16 +111,11 @@ be shown from a laptop on a train, and it cannot leak anything or bill anything.
 It follows the shape of the real product but is not wired to it, so treat the
 figures as illustrative rather than as a specification.
 
-Three things in particular are simplifications:
+Two things in particular are simplifications:
 
 - **"Simulate the applicant consenting"** stands in for something that happens
   on GOV.UK, in the applicant's own time — minutes or hours after the case is
   opened, not seconds.
-- **Commercial cases stop at `PENDING`** with a note about manual review. That
-  rule came with the original demo and has not been confirmed against the
-  product — the gateway has no manual-review path, and `query_category` changes
-  nothing about how a case is processed there. Worth settling before a customer
-  asks how commercial cases get reviewed.
 - **Timings are compressed.** The real service re-checks a pending case every
   five minutes for up to 24 hours. Here the steps take about a second each, so
   the sequence can be shown rather than waited out.
