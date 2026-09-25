@@ -24,7 +24,7 @@ The case list seeds one of each, so all of them can be shown:
 
 | Status | What it means |
 |---|---|
-| `PENDING` | submitted, not yet picked up |
+| `PENDING` | not yet submitted to HMRC — see below, it means two different things |
 | `AWAITING CONSENT` | waiting for the applicant to authorise at HMRC |
 | `POLLING` | consent given, waiting for HMRC to release the record |
 | `READY` | HMRC has released it; the report is being retrieved |
@@ -32,8 +32,20 @@ The case list seeds one of each, so all of them can be shown:
 | `FAILED` | no payroll match and no consent route |
 | `EXPIRED` | 24 hours passed with no response |
 
+`PENDING` covers two unrelated situations, and the demo now says which:
+
+- **A commercial case** is held for manual review before anything is sent to
+  HMRC. Nothing is being polled, because nothing has been submitted. The review
+  is a step outside the system, so a button stands in for someone completing it
+  — the same arrangement as the applicant consenting on GOV.UK.
+- **A residential case** is simply waiting for a worker to pick it up, which in
+  the live service takes seconds. A case appears in the list at `PENDING` the
+  moment it is created, before Equifax has been called at all, which is exactly
+  what the real API does.
+
 Opening a case shows what a broker can actually do about it at that point:
 
+- **Pending** — what it is waiting on, and a way to move it past that
 - **Awaiting consent** — the consent link, ready to resend, and a refresh
 - **Polling or ready** — what is being waited on, and that it is re-checked
   every five minutes for up to 24 hours
@@ -44,8 +56,13 @@ Opening a case shows what a broker can actually do about it at that point:
   details over, because most failures are a mistyped NI number or date of birth
 - **Delivered** — the report and the PDF export
 
-Refreshing a pending case honestly reports no change. It reads state; it does not
-invent it.
+Refreshing honestly reports no change. It reads state; it does not invent it —
+and on a case that has not been submitted yet there is nothing to refresh, so the
+button is not offered at all.
+
+A commercial case can now be followed all the way through: held for review, then
+submitted, then consent, then polling, then ready, then a delivered report. It
+used to stop at the review and have no way forward.
 
 ### The three outcomes
 

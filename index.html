@@ -565,9 +565,11 @@
     <h2 class="processing-title">Case submitted -- pending review</h2>
     <p class="subtitle" style="margin:14px auto 0; text-align:center; max-width:420px;">Commercial verification cases are reviewed manually and won't show a report immediately. You can check back on this case from the ABC Ltd cases list.</p>
     <div class="actions" style="justify-content:center; margin-top:22px;">
+      <button class="btn-primary" id="pending-review-btn" style="flex:none;">Simulate the review completing</button>
+      <button class="btn-secondary" id="pending-view-cases-btn">View ABC Ltd cases</button>
       <button class="btn-secondary" id="pending-new-case-btn">Start a new case</button>
-      <button class="btn-primary" id="pending-view-cases-btn" style="flex:none;">View ABC Ltd cases</button>
     </div>
+    <p class="demo-note">The review is a step outside this system, like the applicant consenting on GOV.UK. The button stands in for someone completing it.</p>
   </div>
 
   <!-- STEP 3: RESULT -->
@@ -704,6 +706,7 @@
       <p id="pd-pending-detail" class="note"></p>
       <div class="panel-actions">
         <button class="btn-secondary" id="pd-refresh-btn">Refresh status</button>
+        <button class="btn-primary" id="pd-advance-btn">Simulate the review completing</button>
         <button class="btn-primary" id="pd-consent-btn">Simulate the applicant consenting</button>
       </div>
       <p class="note" id="pd-refresh-note"></p>
@@ -1134,29 +1137,44 @@
     showFlowView(processingView);
 
     const created = await simulateCreateOrder(payload);
-    currentOrder = created;
+    // Kept on the order so a commercial case resuming after review takes the
+    // same path it would have taken had it not been held.
+    created.demoOutcome = outcome;
+    // The real API returns 201 with status PENDING, and the case is in the
+    // client's list from that moment -- before Equifax has been called at all.
+    // Adding it only once the outcome was known meant PENDING was a state no
+    // residential case was ever seen in.
+    currentOrder = { ...created, status: "PENDING" };
+    addCaseToPortal(currentOrder);
     document.getElementById("processing-case-id").textContent = "Case \u00b7 " + created.transactionNumber.slice(0, 8);
 
-    // Business rule: commercial cases stay pending -- not yet supported
-    // end-to-end, so they never reach a delivered report in this demo.
+    // Business rule: commercial cases are held for manual review before being
+    // submitted. The review is a step outside this system, so the case stops
+    // here until someone completes it -- see pending-review-btn.
     if (payload.queryCategory === "COMMERCIAL") {
       await new Promise(r => setTimeout(r, 900));
-      currentOrder = { ...created, status: "PENDING" };
-      addCaseToPortal(currentOrder);
       showFlowView(pendingView, "pending-case-id", currentOrder);
       return;
     }
 
+    await resolveOutcome(currentOrder, outcome);
+  });
+
+  // Everything that happens once a case has actually been submitted to HMRC.
+  // Extracted so a commercial case can run the same path after its review,
+  // rather than the review being a dead end.
+  async function resolveOutcome(order, outcome) {
+    await new Promise(r => setTimeout(r, 900));
+
     // No payroll match and no consent route -- a terminal failure, and the
     // wording is the gateway's own error_detail for this case.
     if (outcome === "NO_RECORD") {
-      await new Promise(r => setTimeout(r, 900));
       currentOrder = {
-        ...created,
+        ...order,
         status: "FAILED",
         errorDetail: "No record found and no HMRC waterfall available",
       };
-      addCaseToPortal(currentOrder);
+      updateCaseInPortal(currentOrder);
       showFlowView(failedView, "failed-case-id", currentOrder);
       return;
     }
@@ -1164,24 +1182,23 @@
     // The common case the demo used to hide: HMRC hands back a consent link
     // and nothing further happens until the applicant acts on it.
     if (outcome === "CONSENT") {
-      await new Promise(r => setTimeout(r, 900));
       currentOrder = {
-        ...created,
+        ...order,
         status: "AWAITING_CONSENT",
-        consentUrl: mockConsentUrl(created),
+        consentUrl: mockConsentUrl(order),
       };
-      addCaseToPortal(currentOrder);
+      updateCaseInPortal(currentOrder);
       renderConsent(currentOrder);
       showFlowView(consentView, "consent-case-id", currentOrder);
       return;
     }
 
-    const delivered = await simulateGetResult(created);
+    const delivered = await simulateGetResult(order);
     currentOrder = delivered;
-    addCaseToPortal(delivered);
+    updateCaseInPortal(delivered);
     renderResult(delivered);
     showFlowView(resultView, "result-case-id", delivered);
-  });
+  }
 
   function renderConsent(order) {
     const { payload } = order;
@@ -1284,6 +1301,12 @@
   });
   document.getElementById("pending-view-cases-btn").addEventListener("click", () => {
     showView("portal");
+  });
+
+  document.getElementById("pending-review-btn").addEventListener("click", async () => {
+    if (!currentOrder || currentOrder.status !== "PENDING") return;
+    showFlowView(processingView, "processing-case-id", currentOrder);
+    await resolveOutcome(currentOrder, currentOrder.demoOutcome || "CONSENT");
   });
 
   document.getElementById("failed-new-case-btn").addEventListener("click", () => {
@@ -1472,11 +1495,19 @@
   document.getElementById("category-filter").addEventListener("change", renderPortalList);
 
   const PENDING_TEXT = {
-    PENDING: "This case has been submitted and is waiting to be picked up.",
     AWAITING_CONSENT: "This case is waiting for the applicant to authorise the data share with HMRC.",
     POLLING: "The applicant has consented. We are waiting for HMRC to release the record.",
     READY: "HMRC has released the record. The report is being retrieved.",
   };
+
+  // PENDING covers two unrelated situations, and calling both "waiting to be
+  // picked up" was wrong for one and misleading for the other.
+  function pendingText(order) {
+    if (order.status !== "PENDING") return PENDING_TEXT[order.status] || "This case is still being processed.";
+    return order.payload.queryCategory === "COMMERCIAL"
+      ? "Commercial cases are held for manual review before being submitted to HMRC. Nothing has been sent yet."
+      : "Submitted, and waiting for a worker to pick it up. In the live service that takes seconds.";
+  }
 
   // Which case the detail view is currently showing. Separate from currentOrder,
   // which tracks the new-case flow -- the two are different journeys and sharing
@@ -1511,7 +1542,7 @@
     document.getElementById("pd-refresh-note").textContent = "";
 
     if (PENDING_STATUSES.includes(status)) {
-      document.getElementById("pd-pending-text").textContent = PENDING_TEXT[status] || "This case is still being processed.";
+      document.getElementById("pd-pending-text").textContent = pendingText(order);
 
       // A seeded case has no link until somebody looks at it.
       const wantsConsent = status === "AWAITING_CONSENT";
@@ -1523,10 +1554,25 @@
       consentLine.classList.toggle("hidden", !order.consentUrl);
       if (order.consentUrl) document.getElementById("pd-consent-url").textContent = order.consentUrl;
 
-      document.getElementById("pd-pending-detail").textContent =
-        "Re-checked automatically every 5 minutes for up to 24 hours, then closed as EXPIRED.";
+      // A case still held for review is not being polled -- nothing has been
+      // submitted yet, so there is nothing to poll.
+      document.getElementById("pd-pending-detail").textContent = status === "PENDING"
+        ? "No automatic checking happens until the case is submitted."
+        : "Re-checked automatically every 5 minutes for up to 24 hours, then closed as EXPIRED.";
+
       // Only offer to consent on a case that is actually waiting for it.
       document.getElementById("pd-consent-btn").classList.toggle("hidden", !wantsConsent);
+
+      // And only offer to advance a case that has not been submitted.
+      const advance = document.getElementById("pd-advance-btn");
+      advance.classList.toggle("hidden", status !== "PENDING");
+      advance.textContent = order.payload.queryCategory === "COMMERCIAL"
+        ? "Simulate the review completing"
+        : "Simulate the worker picking it up";
+
+      // Refresh is only meaningful once something is being checked.
+      document.getElementById("pd-refresh-btn").classList.toggle("hidden", status === "PENDING");
+
       pending.classList.remove("hidden");
     } else if (status === "EXPIRED") {
       expired.classList.remove("hidden");
@@ -1598,6 +1644,36 @@
     const delivered = await simulateGetResult(detailOrder);
     detailOrder = delivered;
     updateCaseInPortal(delivered);
+    reopenDetail();
+  });
+
+  document.getElementById("pd-advance-btn").addEventListener("click", () => {
+    // Submitting the case is where HMRC first sees it, so the outcome is decided
+    // here. A seeded case has no recorded outcome, so it takes the consent path
+    // -- the one a real case is most likely to take, and the one worth showing.
+    if (!detailOrder || detailOrder.status !== "PENDING") return;
+
+    const outcome = detailOrder.demoOutcome || "CONSENT";
+    if (outcome === "NO_RECORD") {
+      detailOrder = {
+        ...detailOrder,
+        status: "FAILED",
+        errorDetail: "No record found and no HMRC waterfall available",
+      };
+    } else if (outcome === "INSTANT") {
+      detailOrder = {
+        ...detailOrder,
+        status: "DELIVERED",
+        report: buildMockReport(detailOrder.payload),
+      };
+    } else {
+      detailOrder = {
+        ...detailOrder,
+        status: "AWAITING_CONSENT",
+        consentUrl: mockConsentUrl(detailOrder),
+      };
+    }
+    updateCaseInPortal(detailOrder);
     reopenDetail();
   });
 
