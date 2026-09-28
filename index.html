@@ -424,9 +424,9 @@
         <input id="dob" type="date" required />
       </div>
       <div class="field">
-        <label>National Insurance number</label>
-        <input id="niNumber" required placeholder="QQ123456C" autocomplete="off" spellcheck="false" />
-        <span class="field-hint">The key HMRC matches on. No verification is possible without it.</span>
+        <label>National Insurance number <span style="font-weight:400; color:var(--muted);">(optional)</span></label>
+        <input id="niNumber" placeholder="QQ123456C" autocomplete="off" spellcheck="false" />
+        <span class="field-hint">Not required, but worth collecting: Equifax confirm it improves the chance of an instant match, which saves asking the applicant to authenticate.</span>
       </div>
       <div class="field span2">
         <label>Address line 1</label>
@@ -490,7 +490,7 @@
           <option value="INSTANT">Found in Equifax's own payroll records</option>
           <option value="NO_RECORD">Not found at Equifax or HMRC</option>
         </select>
-        <span class="field-hint">A real case takes whichever of these three paths HMRC's records dictate &mdash; nobody chooses. This selector is here so each one can be shown on demand.</span>
+        <span class="field-hint">A real case takes whichever of these three paths the records dictate &mdash; nobody chooses. Equifax put the instant match rate at <strong>15&ndash;20%</strong>, so roughly four cases in five need the applicant to authenticate with HMRC. This selector is here so each path can be shown on demand.</span>
       </div>
     </div>
 
@@ -522,6 +522,8 @@
       <li><strong>They sign in to HMRC through GOV.UK</strong> with their own Government Gateway credentials. Click2Check never sees those credentials.</li>
       <li><strong>They approve the request.</strong> HMRC releases the payroll record and the case continues on its own &mdash; nobody has to come back and chase it.</li>
     </ol>
+
+    <p class="note-box"><strong>This is the usual path, not the exception.</strong> Equifax hold an instant payroll match for only 15&ndash;20% of applicants, so around four in five cases reach this step. Worth planning for: the applicant has to be reachable, and willing.</p>
 
     <div class="link-box">
       <div class="link-box-label">Consent link</div>

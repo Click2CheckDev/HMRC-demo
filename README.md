@@ -93,9 +93,14 @@ labelled as a demo control on screen and is deliberately not styled to look
 like part of the product — it exists so all three can be shown on demand
 rather than waiting for luck.
 
-**We do not yet know the real split between these three paths.** Until Equifax
-confirms it, treat the demo as showing that all three exist, not how often each
-happens.
+**Equifax put the instant match rate at 15&ndash;20%** (confirmed 25 September
+2026). So roughly **four cases in five reach the consent step**, which is why the
+demo defaults to it. Worth saying out loud when showing this: results are usually
+not instant, and the applicant has to be reachable and willing.
+
+Equifax also confirmed the National Insurance number is **not mandatory**, but
+supplying it improves the chance of an instant match. Worth collecting for that
+reason rather than because anything rejects an order without it.
 
 ## What it is not
 
