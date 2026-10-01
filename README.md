@@ -102,6 +102,48 @@ Equifax also confirmed the National Insurance number is **not mandatory**, but
 supplying it improves the chance of an instant match. Worth collecting for that
 reason rather than because anything rejects an order without it.
 
+### Data retention and deletion
+
+The **Data retention** section in the sidebar. Personal data is deleted after
+six months; the income figures are kept, so historic reporting still works.
+
+The split runs through the middle of one record, so the demo shows what a case
+looks like on the other side of it. One of the seeded cases is old enough to
+have already been swept: open it and the report still renders, with the figures
+intact and "-" where the name, date of birth and address were. The employer and
+business names are gone too, because a sole trader's business name is routinely
+their own name.
+
+Three ways a deletion happens, all of which the section demonstrates:
+
+| | |
+|---|---|
+| **One case** | From the case itself, or by picking it from the list |
+| **A date range** | Every finished case opened between two dates, counted before anything is touched |
+| **Automatically** | After six months, nightly |
+
+Four things the demo deliberately shows failing, because a screen that only
+shows the happy path implies the guards are not there:
+
+- **No reason, no deletion.** Every deletion records who asked and why, so a
+  blank reason is refused. Whitespace too.
+- **An operator cannot delete.** Switch the role at the top of the section. The
+  button greys out, and the deletion itself refuses as well, which is the half
+  that matters.
+- **A case still running cannot be deleted.** Clearing one mid-flight would be
+  undone by the next status check, which fetches the report and writes the
+  details straight back in.
+- **The case survives.** Deleting the data does not remove the case, so a
+  client's invoice history is never rewritten. The total on the portal does not
+  move.
+
+Every deletion lands in the **deletion record** at the bottom: when, which
+case, who, why, how it was triggered, and a batch reference that groups a bulk
+action into one decision. In the live service that table is append-only and
+read-only even to an administrator, and it outlives the cases it describes.
+
+In the live gateway the applicant's personal data is also encrypted at rest.
+
 ## What it is not
 
 **Every figure, name and employer in this demo is invented.** There is no real
@@ -124,12 +166,6 @@ Two things in particular are simplifications:
 - **Timings are compressed.** The real service re-checks a pending case every
   five minutes for up to 24 hours. Here the steps take about a second each, so
   the sequence can be shown rather than waited out.
-
-## Data handling in the real service
-
-Not shown on screen, but the question comes up: in the live gateway the
-applicant's personal data is encrypted at rest, and cleared on a retention
-schedule once it is no longer needed.
 
 ## Running it without the internet
 

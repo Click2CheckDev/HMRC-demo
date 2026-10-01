@@ -397,6 +397,10 @@
       <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5v14M5 12h14"/></svg>
       New case
     </button>
+    <button class="sidebar-link" data-view="retention">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/></svg>
+      Data retention
+    </button>
   </nav>
 </div>
 
@@ -717,6 +721,26 @@
       </div>
     </div>
 
+    <!-- Personal data already deleted. The case stays, and so do the income
+         figures; the applicant's details do not. This is what a client sees
+         when they open a case older than the retention window. -->
+    <div class="panel hidden" id="pd-purged-panel">
+      <p id="pd-purged-text"></p>
+      <p class="note" id="pd-purged-reason"></p>
+    </div>
+
+    <!-- Delete on demand. Offered only on a finished case: deleting one that is
+         still running would be undone by the next status check, which fetches
+         the report and writes the details straight back in. -->
+    <div class="panel hidden" id="pd-delete-panel">
+      <p>Delete this applicant's personal data. The income figures and the billing record are kept. This cannot be undone.</p>
+      <div class="panel-actions">
+        <input id="pd-delete-reason" placeholder="Reason (required)" style="flex:1;min-width:220px;" />
+        <button class="btn-secondary" id="pd-delete-btn">Delete personal data</button>
+      </div>
+      <p class="note" id="pd-delete-note"></p>
+    </div>
+
     <div id="pd-report-panel" class="hidden">
     <div class="section">
       <h2>Order Information</h2>
@@ -769,6 +793,68 @@
       <button class="btn-primary" id="pd-download-btn">Download PDF</button>
     </div>
     </div>
+  </div>
+
+  <!-- DATA RETENTION -->
+  <div id="retention-view" class="card portal-card hidden">
+    <div class="portal-header">
+      <div>
+        <div class="eyebrow muted">Data retention</div>
+        <h1 class="title" style="font-size:26px;">Deletion and retention</h1>
+        <p class="subtitle">Personal data is deleted after six months. The income figures are kept.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <p><strong>Automatic.</strong> A finished case has its personal data deleted <strong><span id="ret-window"></span> days</strong> after it completes: the applicant's name, National Insurance number, date of birth, contact details, address, and the report PDF. The income figures stay, so historic reporting still works.</p>
+      <p class="note">Runs nightly. The case itself remains, so invoicing is never rewritten, and every deletion is recorded below.</p>
+    </div>
+
+    <div class="filter-row">
+      <label for="ret-role">Signed in as</label>
+      <select id="ret-role">
+        <option value="admin">Administrator</option>
+        <option value="operator">Operator</option>
+      </select>
+      <span class="muted" id="ret-role-note"></span>
+    </div>
+
+    <div class="panel">
+      <p><strong>Delete one case.</strong></p>
+      <div class="panel-actions">
+        <select id="ret-single-case" style="flex:1;min-width:200px;"></select>
+      </div>
+      <div class="panel-actions">
+        <input id="ret-single-reason" placeholder="Reason (required)" style="flex:1;min-width:220px;" />
+        <button class="btn-secondary" id="ret-single-btn">Delete</button>
+      </div>
+      <p class="note" id="ret-single-note"></p>
+    </div>
+
+    <div class="panel">
+      <p><strong>Delete a date range.</strong> Every finished case opened between two dates.</p>
+      <div class="panel-actions">
+        <label for="ret-from" class="muted">From</label>
+        <input id="ret-from" type="date" />
+        <label for="ret-to" class="muted">To</label>
+        <input id="ret-to" type="date" />
+        <span class="muted" id="ret-range-count"></span>
+      </div>
+      <div class="panel-actions">
+        <input id="ret-range-reason" placeholder="Reason (required)" style="flex:1;min-width:220px;" />
+        <button class="btn-secondary" id="ret-range-btn">Delete</button>
+      </div>
+      <p class="note" id="ret-range-note"></p>
+    </div>
+
+    <h2 style="font-size:17px;margin:26px 0 10px;">Deletion record</h2>
+    <p class="subtitle" style="margin-bottom:12px;">Every deletion, however it was triggered. Kept permanently, including for cases that have since been removed.</p>
+    <table class="case-table">
+      <thead>
+        <tr><th>When</th><th>Case</th><th>Who</th><th>Why</th><th>Trigger</th><th>Batch</th></tr>
+      </thead>
+      <tbody id="ret-audit-list"></tbody>
+    </table>
   </div>
 
 </main>
@@ -1337,11 +1423,102 @@
     { category: "RESIDENTIAL", status: "PENDING" },
     { category: "COMMERCIAL",  status: "EXPIRED" },
     { category: "RESIDENTIAL", status: "DELIVERED" },
+    // Past the retention window, so the nightly sweep has already cleared it.
+    // The case and its figures are still here; the applicant is not. Seeded
+    // because this is the state a client is most likely to ask about and the
+    // least likely to have been shown.
+    { category: "RESIDENTIAL", status: "DELIVERED", purged: true },
   ];
 
   // Statuses where the case is still moving and there is nothing to read yet.
   // Mirrors isPendingStatus() in the real frontend.
   const PENDING_STATUSES = ["PENDING", "AWAITING_CONSENT", "POLLING", "READY"];
+
+  // ---------- Retention and deletion ----------
+  //
+  // Mirrors orders/services/deletion.py and orders/services/retention.py. The
+  // four shapes C2C asked for on 1 October 2026: one case, a date range, an
+  // automatic window, and a record of who did it and why, with only permitted
+  // users able to do it.
+  //
+  // PERSONAL_DATA_RETENTION_DAYS in the real service.
+  const RETENTION_DAYS = 180;
+
+  // Only a finished case can be deleted. Deleting one still being polled would
+  // be undone by the next status read, which fetches the report and writes the
+  // applicant's details straight back into the row that was just cleared.
+  const TERMINAL_STATUSES = ["DELIVERED", "FAILED", "EXPIRED"];
+
+  // Stands in for the orders.delete_personal_data permission, which is
+  // deliberately separate from being able to administer orders at all.
+  let currentRole = "admin";
+
+  // Stands in for the DeletionRecord table. Append-only here as it is there:
+  // a log the people it records can edit is not a log.
+  const auditLog = [];
+
+  const TRIGGER_LABELS = { SINGLE: "One case", RANGE: "Date range", SCHEDULED: "Automatic" };
+
+  // The allowlist, as in retention.py: the figures survive and anything
+  // identifying does not. Employer names and self-employment business
+  // descriptions go too -- a sole trader's business name is routinely their own
+  // name.
+  function purgeReport(report) {
+    if (!report) return null;
+    return {
+      employers: report.employers.map(e => ({ ...e, employerName: "Not retained" })),
+      selfEmployment: report.selfEmployment.map(s => ({ ...s, business: "Not retained" })),
+      otherIncome: report.otherIncome,
+      taxesPaid: report.taxesPaid,
+      retrievedName: null,
+      retrievedAddress: null,
+    };
+  }
+
+  function purgePayload(payload) {
+    return {
+      ...payload,
+      firstName: "", lastName: "", dob: "", niNumber: "",
+      addressLine1: "", postalCode: "", email: "", mobile: "", employerName: "",
+      // customerReference stays. It is the client's own reference, and removing
+      // it would break their reconciliation against our invoice.
+    };
+  }
+
+  // One implementation behind all three front doors, as in the real service.
+  // Returns { error } or { count, batch }.
+  function deleteCases(cases, reason, trigger) {
+    if (currentRole !== "admin") {
+      return { error: "An operator cannot delete personal data. Ask an administrator." };
+    }
+    reason = (reason || "").trim();
+    if (!reason) {
+      return { error: "A reason is required — every deletion records who asked and why." };
+    }
+    const unfinished = cases.find(c => !TERMINAL_STATUSES.includes(c.status));
+    if (unfinished) {
+      return { error: "That case is still in progress. Deleting it now would be undone by the next status check." };
+    }
+
+    const batch = randomId().slice(0, 8);
+    const actor = "demo.admin";
+    let count = 0;
+    cases.forEach(c => {
+      if (c.purgedAt) return;
+      c.purgedAt = new Date().toISOString();
+      c.purgedBy = actor;
+      c.purgeReason = reason;
+      c.payload = purgePayload(c.payload);
+      c.report = purgeReport(c.report);
+      auditLog.unshift({
+        when: c.purgedAt, caseRef: c.transactionNumber, who: actor,
+        why: reason, trigger, batch,
+      });
+      count++;
+    });
+    saveCasesToStorage();
+    return { count, batch };
+  }
 
   function buildMockCaseList() {
     const PURPOSES = ["MO", "CC", "ES", "TS"];
@@ -1376,6 +1553,21 @@
         errorDetail: status === "FAILED" ? "No record found and no HMRC waterfall available" : "",
         report: status === "DELIVERED" ? buildMockReport(payload) : null,
       };
+      if (seed.purged) {
+        const purgedOn = new Date(d);
+        purgedOn.setDate(purgedOn.getDate() + RETENTION_DAYS);
+        order.createdAt = new Date(d.getTime() - RETENTION_DAYS * 86400000).toISOString();
+        order.purgedAt = purgedOn.toISOString();
+        order.purgedBy = "retention schedule";
+        order.purgeReason = "Automatic retention sweep: finished more than " + RETENTION_DAYS + " days ago.";
+        order.payload = purgePayload(payload);
+        order.report = purgeReport(order.report);
+        auditLog.push({
+          when: order.purgedAt, caseRef: order.transactionNumber,
+          who: order.purgedBy, why: order.purgeReason, trigger: "SCHEDULED",
+          batch: randomId().slice(0, 8),
+        });
+      }
       return order;
     });
   }
@@ -1503,8 +1695,28 @@
     const expired = document.getElementById("pd-expired-panel");
     const failed = document.getElementById("pd-failed-panel");
     const reportPanel = document.getElementById("pd-report-panel");
-    [pending, expired, failed, reportPanel].forEach(p => p.classList.add("hidden"));
+    const purged = document.getElementById("pd-purged-panel");
+    const deletePanel = document.getElementById("pd-delete-panel");
+    [pending, expired, failed, reportPanel, purged, deletePanel].forEach(p => p.classList.add("hidden"));
     document.getElementById("pd-refresh-note").textContent = "";
+    document.getElementById("pd-delete-note").textContent = "";
+    document.getElementById("pd-delete-reason").value = "";
+
+    if (order.purgedAt) {
+      // Already deleted: say so plainly rather than showing a report with
+      // blanks in it and leaving the reader to guess why.
+      document.getElementById("pd-purged-text").textContent =
+        "The applicant's personal data was deleted on "
+        + new Date(order.purgedAt).toLocaleDateString("en-GB")
+        + " by " + order.purgedBy
+        + ". The income figures below are retained; the applicant's details are not.";
+      document.getElementById("pd-purged-reason").textContent = "Reason recorded: " + order.purgeReason;
+      purged.classList.remove("hidden");
+    } else if (TERMINAL_STATUSES.includes(status)) {
+      // Offered only on a finished case. A running one is refused, because
+      // deleting it would be undone by the next status check.
+      deletePanel.classList.remove("hidden");
+    }
 
     if (PENDING_STATUSES.includes(status)) {
       document.getElementById("pd-pending-text").textContent = pendingText(order);
@@ -1559,11 +1771,18 @@
     document.getElementById("pd-report-date").textContent = new Date(order.createdAt).toLocaleString("en-GB");
     document.getElementById("pd-purpose").textContent = PURPOSE_LABELS[payload.identifyingPurpose] || payload.identifyingPurpose;
     document.getElementById("pd-tracking").textContent = order.transactionNumber;
-    document.getElementById("pd-name").textContent = payload.firstName + " " + payload.lastName;
-    document.getElementById("pd-dob").textContent = new Date(payload.dob).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
-    document.getElementById("pd-address").textContent = payload.addressLine1 + ", " + payload.postalCode;
-    document.getElementById("pd-retrieved-name").textContent = report.retrievedName;
-    document.getElementById("pd-retrieved-address").textContent = report.retrievedAddress;
+    // A purged case renders "-" rather than an empty row: the real report does
+    // the same, because build_report_context falls back to "-" once the fields
+    // are cleared. The figures below are untouched.
+    const gone = !!order.purgedAt;
+    document.getElementById("pd-name").textContent =
+      gone ? "-" : payload.firstName + " " + payload.lastName;
+    document.getElementById("pd-dob").textContent =
+      gone ? "-" : new Date(payload.dob).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+    document.getElementById("pd-address").textContent =
+      gone ? "-" : payload.addressLine1 + ", " + payload.postalCode;
+    document.getElementById("pd-retrieved-name").textContent = report.retrievedName || "-";
+    document.getElementById("pd-retrieved-address").textContent = report.retrievedAddress || "-";
 
     document.getElementById("pd-payroll-employers").innerHTML = renderPayrollEmployersHtml(report);
     document.getElementById("pd-self-employment").innerHTML = renderSelfEmploymentHtml(report.selfEmployment);
@@ -1581,6 +1800,18 @@
     renderPortalList();
     openCaseDetail(detailOrder);
   }
+
+  document.getElementById("pd-delete-btn").addEventListener("click", () => {
+    if (!detailOrder) return;
+    const note = document.getElementById("pd-delete-note");
+    const result = deleteCases(
+      [detailOrder], document.getElementById("pd-delete-reason").value, "SINGLE"
+    );
+    if (result.error) { note.textContent = result.error; return; }
+    renderPortalList();
+    openCaseDetail(detailOrder);
+    document.getElementById("pd-purged-reason").textContent += "  (batch " + result.batch + ")";
+  });
 
   document.getElementById("pd-refresh-btn").addEventListener("click", () => {
     // A refresh reads state; it does not create it. Saying "no change yet" is
@@ -1678,7 +1909,123 @@
   const portalDetailView = document.getElementById("portal-detail-view");
   const navBtns = document.querySelectorAll(".sidebar-link");
   const pageTitle = document.getElementById("page-title");
-  const PAGE_TITLES = { "portal": "ABC Ltd cases", "new-case": "New case" };
+  const PAGE_TITLES = {
+    "portal": "ABC Ltd cases",
+    "new-case": "New case",
+    "retention": "Data retention",
+  };
+
+  // ---------- Data retention view ----------
+  const retentionView = document.getElementById("retention-view");
+
+  function deletableCases() {
+    return portalCases.filter(c => TERMINAL_STATUSES.includes(c.status) && !c.purgedAt);
+  }
+
+  function renderRetention() {
+    document.getElementById("ret-window").textContent = RETENTION_DAYS;
+
+    const isAdmin = currentRole === "admin";
+    document.getElementById("ret-role-note").textContent = isAdmin
+      ? "May delete personal data."
+      : "May view cases, but not delete personal data.";
+    ["ret-single-btn", "ret-range-btn"].forEach(id => {
+      document.getElementById(id).disabled = !isAdmin;
+    });
+
+    const options = deletableCases();
+    const select = document.getElementById("ret-single-case");
+    select.innerHTML = options.length
+      ? options.map(c => `<option value="${c.id}">${c.payload.firstName} ${c.payload.lastName} · ${c.status} · ${new Date(c.createdAt).toLocaleDateString("en-GB")}</option>`).join("")
+      : '<option value="">No finished cases left to delete</option>';
+
+    renderRangeCount();
+    renderAuditLog();
+  }
+
+  function renderAuditLog() {
+    const tbody = document.getElementById("ret-audit-list");
+    if (!auditLog.length) {
+      tbody.innerHTML = '<tr><td colspan="6" class="muted">Nothing deleted yet.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = auditLog.map(r => `
+      <tr>
+        <td>${new Date(r.when).toLocaleString("en-GB")}</td>
+        <td class="mono">${r.caseRef.slice(0, 12)}…</td>
+        <td>${r.who}</td>
+        <td>${r.why}</td>
+        <td>${TRIGGER_LABELS[r.trigger] || r.trigger}</td>
+        <td class="mono">${r.batch}</td>
+      </tr>
+    `).join("");
+  }
+
+  // Inclusive at both ends, as --from/--to are in the real command: taking the
+  // end date literally would mean midnight and silently drop a whole day.
+  function casesInRange(fromValue, toValue) {
+    if (!fromValue || !toValue) return null;
+    const from = new Date(fromValue + "T00:00:00");
+    const to = new Date(toValue + "T23:59:59");
+    if (from > to) return null;
+    return deletableCases().filter(c => {
+      const opened = new Date(c.createdAt);
+      return opened >= from && opened <= to;
+    });
+  }
+
+  function renderRangeCount() {
+    const matched = casesInRange(
+      document.getElementById("ret-from").value,
+      document.getElementById("ret-to").value
+    );
+    document.getElementById("ret-range-count").textContent =
+      matched === null ? "" : `${matched.length} case(s) match`;
+  }
+
+  ["ret-from", "ret-to"].forEach(id =>
+    document.getElementById(id).addEventListener("change", renderRangeCount)
+  );
+
+  document.getElementById("ret-role").addEventListener("change", (e) => {
+    currentRole = e.target.value;
+    renderRetention();
+  });
+
+  document.getElementById("ret-single-btn").addEventListener("click", () => {
+    const note = document.getElementById("ret-single-note");
+    const id = document.getElementById("ret-single-case").value;
+    const target = portalCases.find(c => c.id === id);
+    if (!target) { note.textContent = "Pick a case first."; return; }
+
+    const result = deleteCases(
+      [target], document.getElementById("ret-single-reason").value, "SINGLE"
+    );
+    if (result.error) { note.textContent = result.error; return; }
+
+    note.textContent = `Deleted 1 case. Recorded against batch ${result.batch}.`;
+    document.getElementById("ret-single-reason").value = "";
+    renderRetention();
+  });
+
+  document.getElementById("ret-range-btn").addEventListener("click", () => {
+    const note = document.getElementById("ret-range-note");
+    const matched = casesInRange(
+      document.getElementById("ret-from").value,
+      document.getElementById("ret-to").value
+    );
+    if (matched === null) { note.textContent = "Give a start and an end date, in that order."; return; }
+    if (!matched.length) { note.textContent = "No finished cases in that range."; return; }
+
+    const result = deleteCases(
+      matched, document.getElementById("ret-range-reason").value, "RANGE"
+    );
+    if (result.error) { note.textContent = result.error; return; }
+
+    note.textContent = `Deleted ${result.count} case(s). Recorded against batch ${result.batch}.`;
+    document.getElementById("ret-range-reason").value = "";
+    renderRetention();
+  });
 
   function showView(view) {
     // Navigating away abandons whatever case was mid-flow. Without this the
@@ -1686,12 +2033,13 @@
     // and a stray click drops a finished report on top of the new-case form.
     currentOrder = null;
     hideFlowViews();
-    [portalView, portalDetailView].forEach(v => v.classList.add("hidden"));
+    [portalView, portalDetailView, retentionView].forEach(v => v.classList.add("hidden"));
     navBtns.forEach(b => b.classList.toggle("active", b.dataset.view === view));
     pageTitle.textContent = PAGE_TITLES[view] || "";
 
     if (view === "new-case") formView.classList.remove("hidden");
     if (view === "portal") { renderPortalList(); portalView.classList.remove("hidden"); }
+    if (view === "retention") { renderRetention(); retentionView.classList.remove("hidden"); }
   }
 
   navBtns.forEach(btn => {
