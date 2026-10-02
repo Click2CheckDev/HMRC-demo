@@ -412,6 +412,11 @@
   }
   .gov-mark { font-weight: 700; font-size: 15px; letter-spacing: -0.01em; }
   .gov-service { font-size: 14px; color: #c9cbcd; }
+  .gov-account {
+    margin-left: auto; font-size: 12px; font-weight: 700;
+    letter-spacing: 0.04em; text-transform: uppercase;
+    background: #fff; color: #0b0c0c; padding: 3px 9px; border-radius: 3px;
+  }
   .gov-body { padding: 26px 20px 30px; max-width: 520px; }
   .gov-h1 { font-size: 22px; margin: 0 0 10px; font-weight: 700; color: #0b0c0c; }
   .gov-lede { font-size: 14px; color: #3a3d42; margin: 0 0 20px; line-height: 1.55; }
@@ -777,6 +782,7 @@
         <div class="gov-header">
           <span class="gov-mark">HM Government</span>
           <span class="gov-service">Government Gateway</span>
+          <span class="gov-account" id="gov-account"></span>
         </div>
 
         <div class="gov-body">
@@ -1482,6 +1488,7 @@
     RESIDENTIAL: {
       cta: "Confirm your income with HMRC",
       title: "The personal link",
+      accountLabel: "Gateway Account — Personal",
       heading: "Sign in to your Government Gateway account",
       lede: "HMRC need to know it is you before releasing your employment and income record.",
       idLabel: "Government Gateway user ID",
@@ -1489,7 +1496,8 @@
     },
     COMMERCIAL: {
       cta: "Confirm your company income with HMRC",
-      title: "The company link",
+      title: "The commercial link",
+      accountLabel: "Gateway Account — Commercial",
       heading: "Sign in to your organisation's Government Gateway account",
       lede: "A company's records sit behind its own Government Gateway account, not the director's personal one. That is why this is a separate link.",
       idLabel: "Organisation Government Gateway user ID",
@@ -2116,6 +2124,7 @@
     document.getElementById("applicant-title").textContent = copy.title;
     document.getElementById("applicant-address").textContent =
       currentLeg === "COMMERCIAL" ? currentOrder.companyConsentUrl : currentOrder.consentUrl;
+    document.getElementById("gov-account").textContent = copy.accountLabel;
     document.getElementById("gov-heading").textContent = copy.heading;
     document.getElementById("gov-lede").textContent = copy.lede;
     document.getElementById("gov-id-label").textContent = copy.idLabel;

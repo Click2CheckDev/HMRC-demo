@@ -211,6 +211,7 @@ sections:
 | | Residential | Commercial |
 |---|---|---|
 | Link | `/individual/…` | `/company/…` |
+| Account label | *Gateway Account — Personal* | *Gateway Account — Commercial* |
 | Signs in as | themselves | the organisation |
 | Report shows | employment, self-employment, other income | **dividends, shareholdings** |
 
