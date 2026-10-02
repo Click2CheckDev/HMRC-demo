@@ -317,6 +317,23 @@
     text-transform: uppercase; color: var(--muted); margin-bottom: 7px;
   }
   .link-box code { font-family: var(--font-mono); font-size: 12.5px; color: var(--brand-ink); word-break: break-all; }
+  .link-clickable { cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+  .link-clickable:hover { opacity: 0.75; }
+  .link-actions { display: flex; align-items: center; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+  .btn-small { padding: 6px 12px; font-size: 12.5px; }
+
+  /* The applicant's side. Deliberately Click2Check's own styling with a
+     simulation banner across the top: this illustrates what HMRC ask for, and is
+     not a reproduction of a Government Gateway sign-in page. The inputs are
+     readonly and prefilled with obvious placeholders, so the page cannot collect
+     anything from anybody even by accident. */
+  .sim-banner {
+    background: var(--brand); color: #fff; border-radius: 4px;
+    padding: 10px 14px; margin-bottom: 20px; font-size: 13px; font-weight: 600;
+  }
+  .readonly-field input {
+    background: var(--bg); color: var(--muted); cursor: not-allowed;
+  }
 
   .note-box {
     border-left: 3px solid var(--border-strong); padding: 2px 0 2px 14px;
@@ -523,20 +540,67 @@
       <li><strong>They approve the request.</strong> HMRC releases the payroll record and the case continues on its own &mdash; nobody has to come back and chase it.</li>
     </ol>
 
-    <p class="note-box"><strong>This is the usual path, not the exception.</strong> Equifax hold an instant payroll match for only 15&ndash;20% of applicants, so around four in five cases reach this step. Worth planning for: the applicant has to be reachable, and willing.</p>
-
     <div class="link-box">
       <div class="link-box-label">Consent link</div>
-      <code id="consent-url"></code>
+      <code id="consent-url" class="link-clickable" role="button" tabindex="0"
+            title="Open what the applicant sees"></code>
+      <div class="link-actions">
+        <button type="button" class="btn-secondary btn-small" id="consent-copy-btn">Copy link</button>
+        <button type="button" class="btn-secondary btn-small" id="consent-open-btn">Open as the applicant</button>
+        <span class="muted" id="consent-copy-note"></span>
+      </div>
     </div>
 
-    <p class="note-box">Until then the case sits at <span class="status-pill awaiting_consent">AWAITING CONSENT</span> and is re-checked every 5 minutes for up to 24 hours. If the applicant has not consented by then it is closed as <span class="status-pill expired">EXPIRED</span> and a fresh case has to be opened.</p>
+    <p class="note-box">Until then the case sits at <span class="status-pill awaiting_consent">AWAITING CONSENT</span>. If the applicant has not consented within 24 hours it is closed as <span class="status-pill expired">EXPIRED</span> and a fresh case has to be opened.</p>
 
     <div class="actions">
       <button class="btn-primary" id="consent-simulate-btn">Simulate the applicant consenting</button>
       <button class="btn-secondary" id="consent-cases-btn">Leave it pending</button>
     </div>
     <p class="demo-note">That first button stands in for something the applicant does on GOV.UK in their own time &mdash; minutes or hours after the case is opened, not seconds.</p>
+  </div>
+
+  <!-- STEP 2c-ii: WHAT THE APPLICANT SEES
+       Reached by opening the consent link. The demo described this page in words
+       and never showed it, which is the step four cases in five depend on.
+
+       Deliberately NOT a reproduction of a Government Gateway sign-in screen.
+       It carries Click2Check's own styling and a simulation banner, and every
+       input is readonly with an obvious placeholder value, so it cannot collect
+       a credential from anyone even by accident. Naming the three things HMRC
+       ask for is the informative part; imitating their page is not, and this
+       demo is published publicly. -->
+  <div id="applicant-view" class="card hidden">
+    <div class="sim-banner">Simulation &mdash; this is an illustration of the applicant's side, not a real sign-in page. Nothing here is submitted anywhere.</div>
+
+    <div class="eyebrow muted" id="applicant-case-id"></div>
+    <h1 class="title">What the applicant sees</h1>
+    <p class="subtitle">Opening the consent link takes the applicant to Equifax's verification page, where HMRC identify them through their own Government Gateway account. Click2Check never sees any of these details.</p>
+
+    <div class="grid">
+      <div class="field readonly-field">
+        <label>Government Gateway user ID</label>
+        <input value="example-user-id" readonly autocomplete="off" tabindex="-1" />
+      </div>
+      <div class="field readonly-field">
+        <label>Password</label>
+        <input value="not a real password" readonly autocomplete="off" tabindex="-1" />
+      </div>
+      <div class="field readonly-field">
+        <label>Access code</label>
+        <input value="000000" readonly autocomplete="off" tabindex="-1" />
+        <span class="field-hint">Sent to the applicant by HMRC. Two-factor authentication is required on their side, not ours.</span>
+      </div>
+    </div>
+
+    <p class="note-box"><strong>No address is asked for.</strong> Worth knowing, because it is easy to assume otherwise: HMRC identify the person from the Government Gateway account itself. The address on the order form is used for the Equifax lookup, not for this step.</p>
+
+    <p class="note-box">Whichever of these the applicant does, they do it in their own time &mdash; minutes or hours after the case is opened, not seconds. The broker does not wait on this screen.</p>
+
+    <div class="actions">
+      <button class="btn-primary" id="applicant-authorise-btn">Authorise the data share</button>
+      <button class="btn-secondary" id="applicant-back-btn">Back without authorising</button>
+    </div>
   </div>
 
   <!-- STEP 2d: POLLING (consent given, waiting on HMRC) -->
@@ -546,7 +610,7 @@
       <span class="spinner"></span>
       <h2 class="processing-title">Consent given &mdash; retrieving HMRC record&hellip;</h2>
     </div>
-    <p class="subtitle" style="margin:14px auto 0; text-align:center; max-width:470px;">In the live service this is a background poll, so nobody sits and watches it. The case moves to <span class="status-pill ready">READY</span> and the broker is notified when the report lands.</p>
+    <p class="subtitle" style="margin:14px auto 0; text-align:center; max-width:470px;">In the live service this happens in the background, so nobody sits and watches it. The case moves to <span class="status-pill ready">READY</span> and the broker is notified when the report lands.</p>
   </div>
 
   <!-- STEP 2e: NO RECORD FOUND -->
@@ -688,10 +752,15 @@
 
     <!-- Waiting on the applicant, or on HMRC. The real portal shows the consent
          link here so a broker can resend it, and a refresh to pick up whatever
-         the background poll has found. -->
+         the background has found. -->
     <div class="panel hidden" id="pd-pending-panel">
       <p id="pd-pending-text"></p>
-      <p id="pd-consent-line" class="hidden">Send this link to the applicant so they can authenticate with HMRC:<br/><code id="pd-consent-url"></code></p>
+      <p id="pd-consent-line" class="hidden">Send this link to the applicant so they can authenticate with HMRC:<br/><code id="pd-consent-url"></code>
+        <span class="link-actions">
+          <button type="button" class="btn-secondary btn-small" id="pd-consent-copy-btn">Copy link</button>
+          <span class="muted" id="pd-consent-copy-note"></span>
+        </span>
+      </p>
       <p id="pd-pending-detail" class="note"></p>
       <div class="panel-actions">
         <button class="btn-secondary" id="pd-refresh-btn">Refresh status</button>
@@ -1057,7 +1126,7 @@
     },
     {
       label: "Ewan Blaylock — never completes the consent",
-      hint: "The link is sent and nothing happens. After 24 hours of five-minute checks the case closes as EXPIRED. It can be resumed by hand if the applicant turns up late.",
+      hint: "The link is sent and nothing happens. After 24 hours the case closes as EXPIRED. It can be resumed by hand if the applicant turns up late.",
       outcome: "EXPIRES", reportKind: "MIXED",
       firstName: "Ewan", lastName: "Blaylock", dob: "1982-08-30", niNumber: "QQ123460C",
       addressLine1: "31 Clayton Street", postalCode: "NE1 5PN",
@@ -1279,7 +1348,8 @@
 
   // One list, used by both the flow steps and the nav, so a new step can never
   // be left visible underneath another one.
-  const FLOW_VIEWS = [formView, processingView, consentView, pollingView, failedView, resultView];
+  const applicantView = document.getElementById("applicant-view");
+  const FLOW_VIEWS = [formView, processingView, consentView, applicantView, pollingView, failedView, resultView];
 
   function hideFlowViews() {
     FLOW_VIEWS.forEach(v => v.classList.add("hidden"));
@@ -1420,6 +1490,8 @@
     // choice, so the button offers whichever thing they actually do. A broker
     // cannot tell the two apart at this point either -- which is the reason the
     // 24-hour window exists at all.
+    document.getElementById("consent-copy-note").textContent = "";
+
     const expires = order.demoOutcome === "EXPIRES";
     const btn = document.getElementById("consent-simulate-btn");
     btn.textContent = expires
@@ -1526,29 +1598,68 @@
     showView("portal");
   });
 
-  document.getElementById("consent-simulate-btn").addEventListener("click", async () => {
-    // Guarded: the nav can move away from this screen and back, and consenting
-    // twice on a case that has already moved on would be nonsense.
-    if (!currentOrder || currentOrder.status !== "AWAITING_CONSENT") return;
+  // ---------- The consent link ----------
+  //
+  // It used to be inert text. Two things were missing rather than one: a broker's
+  // whole job on an AWAITING CONSENT case is getting the link to the applicant,
+  // and the applicant's side of the journey was described in words and never
+  // shown.
 
-    // This applicant never completes it. 288 five-minute polls over 24 hours all
-    // come back "In progress", and the gateway closes the case. The wording is
-    // the gateway's own error_detail for giving up at the attempt limit.
-    if (currentOrder.demoOutcome === "EXPIRES") {
-      // Held in a local, because showView() deliberately clears currentOrder --
-      // navigating away is meant to abandon whatever case was mid-flow. Reading
-      // it back afterwards hands openCaseDetail a null.
-      const expired = {
-        ...currentOrder,
-        status: "EXPIRED",
-        errorDetail: "Polling gave up after max attempts",
-      };
-      currentOrder = expired;
-      updateCaseInPortal(expired);
-      showView("portal");
-      openCaseDetail(expired);
-      return;
+  async function copyLink(urlElementId, noteElementId) {
+    const note = document.getElementById(noteElementId);
+    const url = document.getElementById(urlElementId).textContent;
+    if (!url) return;
+
+    // Reports what actually happened. Saying "copied" when the clipboard was
+    // unavailable sends somebody off to paste nothing.
+    try {
+      await navigator.clipboard.writeText(url);
+      note.textContent = "Link copied.";
+    } catch (e) {
+      note.textContent = "Could not copy automatically — select the link and copy it.";
     }
+  }
+
+  function openApplicantView() {
+    if (!currentOrder || currentOrder.status !== "AWAITING_CONSENT") return;
+    showFlowView(applicantView, "applicant-case-id", currentOrder);
+  }
+
+  document.getElementById("consent-copy-btn").addEventListener(
+    "click", () => copyLink("consent-url", "consent-copy-note"));
+  document.getElementById("pd-consent-copy-btn").addEventListener(
+    "click", () => copyLink("pd-consent-url", "pd-consent-copy-note"));
+  document.getElementById("consent-open-btn").addEventListener("click", openApplicantView);
+
+  const consentUrlEl = document.getElementById("consent-url");
+  consentUrlEl.addEventListener("click", openApplicantView);
+  consentUrlEl.addEventListener("keydown", (e) => {
+    // Clickable text has to be operable from the keyboard too, or it is a button
+    // only some people can press.
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openApplicantView(); }
+  });
+
+  document.getElementById("applicant-back-btn").addEventListener("click", () => {
+    if (!currentOrder) return;
+    renderConsent(currentOrder);
+    showFlowView(consentView, "consent-case-id", currentOrder);
+  });
+
+  // Authorising from the applicant's side is the same event as the simulate
+  // button on the broker's side, so it runs the same code rather than a second
+  // copy of it.
+  document.getElementById("applicant-authorise-btn").addEventListener("click", () => {
+    // Deliberately not the simulate button's handler. For the applicant who
+    // never consents, that one expires the case -- which is right for "nobody
+    // acted" and wrong for "they just pressed Authorise".
+    proceedAfterConsent();
+  });
+
+  // Consent given. Separate from the button, because it is reachable two ways
+  // now -- the broker's simulate button and the applicant authorising on their
+  // own screen -- and those must not be two copies that drift apart.
+  async function proceedAfterConsent() {
+    if (!currentOrder || currentOrder.status !== "AWAITING_CONSENT") return;
 
     const polling = { ...currentOrder, status: "POLLING" };
     currentOrder = polling;
@@ -1569,6 +1680,33 @@
     updateCaseInPortal(delivered);
     renderResult(delivered);
     showFlowView(resultView, "result-case-id", delivered);
+  }
+
+  document.getElementById("consent-simulate-btn").addEventListener("click", () => {
+    // Guarded: the nav can move away from this screen and back, and consenting
+    // twice on a case that has already moved on would be nonsense.
+    if (!currentOrder || currentOrder.status !== "AWAITING_CONSENT") return;
+
+    // This applicant never completes it. 24 hours pass with no authorisation and
+    // the gateway closes the case. The wording is its own error_detail for giving
+    // up at the attempt limit.
+    if (currentOrder.demoOutcome === "EXPIRES") {
+      // Held in a local, because showView() deliberately clears currentOrder --
+      // navigating away is meant to abandon whatever case was mid-flow. Reading
+      // it back afterwards hands openCaseDetail a null.
+      const expired = {
+        ...currentOrder,
+        status: "EXPIRED",
+        errorDetail: "Polling gave up after max attempts",
+      };
+      currentOrder = expired;
+      updateCaseInPortal(expired);
+      showView("portal");
+      openCaseDetail(expired);
+      return;
+    }
+
+    proceedAfterConsent();
   });
 
   // ---------- Client portal (ABC Ltd) ----------
@@ -1912,6 +2050,7 @@
         order.consentUrl = mockConsentUrl(order);
         updateCaseInPortal(order);
       }
+      document.getElementById("pd-consent-copy-note").textContent = "";
       const consentLine = document.getElementById("pd-consent-line");
       consentLine.classList.toggle("hidden", !order.consentUrl);
       if (order.consentUrl) document.getElementById("pd-consent-url").textContent = order.consentUrl;
@@ -1920,7 +2059,7 @@
       // submitted yet, so there is nothing to poll.
       document.getElementById("pd-pending-detail").textContent = status === "PENDING"
         ? "Nothing has been sent to Equifax yet, so there is nothing to check."
-        : "Re-checked automatically every 5 minutes for up to 24 hours, then closed as EXPIRED.";
+        : "Followed automatically for up to 24 hours, then closed as EXPIRED.";
 
       // Only offer to consent on a case that is actually waiting for it.
       document.getElementById("pd-consent-btn").classList.toggle("hidden", !wantsConsent);

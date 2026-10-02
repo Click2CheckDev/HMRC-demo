@@ -42,8 +42,8 @@ Opening a case shows what a broker can actually do about it at that point:
 
 - **Pending** — what it is waiting on, and a way to move it past that
 - **Awaiting consent** — the consent link, ready to resend, and a refresh
-- **Polling or ready** — what is being waited on, and that it is re-checked
-  every five minutes for up to 24 hours
+- **Polling or ready** — what is being waited on, and that it is followed
+  automatically for up to 24 hours
 - **Expired** — a *Resume checking* button, which is the real service's
   `POST /orders/<id>/refresh/`. That endpoint only accepts expired orders, which
   is why the button appears nowhere else
@@ -73,7 +73,7 @@ Picking one fills the form, and every field stays editable.
 | **Alan Pettifer** | An instant match in Equifax's own payroll data. No HMRC, no consent, report in one step. Equifax put this at 15–20%. |
 | **Dev Ramanathan** | Self-employed. Consent is still needed, and the report that comes back has **no employment section at all**. |
 | **Josie Hartnell** | No match at Equifax or HMRC. Closes as `FAILED`. Usually an NI number, date of birth or surname that does not match what is held. |
-| **Ewan Blaylock** | The consent link is sent and nothing happens. After 24 hours of five-minute checks the case closes as `EXPIRED`, and can be resumed by hand. |
+| **Ewan Blaylock** | The consent link is sent and nothing happens. After 24 hours the case closes as `EXPIRED`, and can be resumed by hand. |
 
 Ewan Blaylock reaches exactly the same screen as Marcy Okonjo, which is the
 point: a broker cannot tell in advance which of the two they are dealing with.
@@ -108,6 +108,26 @@ Once they authorise it, the case moves `AWAITING CONSENT` → `POLLING` → `REA
 `DELIVERED` on its own. `READY` is brief but real: one background task sees that
 HMRC has released the record, and a second one fetches it.
 
+The **consent link is usable**, not decoration. **Copy link** puts it on the
+clipboard, and says so — or says it could not, rather than claiming success and
+sending someone off to paste nothing. The same button is on an awaiting-consent
+case in the list, which is where a broker goes back to resend it.
+
+Clicking the link itself opens **what the applicant sees**: the three things HMRC
+ask for, and an *Authorise* button that carries the case on exactly as the
+broker-side button does. It is reachable from the keyboard as well as the mouse.
+
+That screen is deliberately **Click2Check's own styling with a simulation banner,
+not a reproduction of a Government Gateway sign-in page**, and every field is
+readonly with a placeholder value. A convincing fake of a government login asking
+for a user ID, password and access code is a phishing template whatever it was
+built for, and this repository is public. Naming the three fields makes the point;
+imitating the page does not.
+
+One deliberate asymmetry: *Authorise* always authorises, including for Ewan
+Blaylock. "Never completes the consent" describes what happens when nobody acts,
+and pressing the button is acting.
+
 ### Residential and Commercial are the same thing
 
 Worth stating plainly, because an earlier version of this demo said otherwise.
@@ -121,10 +141,8 @@ cases at "pending review" and never produced a report for them, which was
 invented rather than observed. It has been removed, and commercial cases now
 appear across the same statuses as residential ones.
 
-The **demo control** on the new-case form picks which one to show. It is
-labelled as a demo control on screen and is deliberately not styled to look
-like part of the product — it exists so all three can be shown on demand
-rather than waiting for luck.
+Both appear across the same statuses in the seeded case list, and the category
+filter above it shows how `?query_category=` narrows the real `GET /orders/`.
 
 **Equifax put the instant match rate at 15&ndash;20%** (confirmed 25 September
 2026). So roughly **four cases in five reach the consent step**, which is why the
@@ -200,12 +218,12 @@ figures as illustrative rather than as a specification.
 
 Two things in particular are simplifications:
 
-- **"Simulate the applicant consenting"** stands in for something that happens
-  on GOV.UK, in the applicant's own time — minutes or hours after the case is
-  opened, not seconds.
-- **Timings are compressed.** The real service re-checks a pending case every
-  five minutes for up to 24 hours. Here the steps take about a second each, so
-  the sequence can be shown rather than waited out.
+- **"Simulate the applicant consenting"** stands in for something the applicant
+  does in their own time — minutes or hours after the case is opened, not
+  seconds. Opening the consent link shows their side of it.
+- **Timings are compressed.** The real service follows a pending case for up to
+  24 hours. Here the steps take about a second each, so the sequence can be shown
+  rather than waited out.
 
 ## Running it without the internet
 
