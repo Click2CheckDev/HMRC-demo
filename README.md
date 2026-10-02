@@ -119,6 +119,25 @@ thing an applicant ever sees of us, and whether they act on it decides whether t
 case completes at all. The inbox also says the link was texted as well as emailed:
 reaching the applicant is the dependency.
 
+The email **lists what they will need before they start**: the Government Gateway
+user ID, the password, and the phone or authenticator app HMRC send the access
+code to. A director doing both legs is told the company's credentials are separate
+from their own. An applicant who gets three screens in and then cannot find their
+user ID abandons it, and an abandoned consent is a case that expires.
+
+It also says what to do if they do not know their details. **HMRC can recover a
+user ID or reset a password; Click2Check cannot.** And if they have never had a
+Government Gateway account at all, they have to create one, which can take HMRC a
+few days to confirm — so the email says to start early rather than close to the
+deadline.
+
+> Worth saying out loud when showing this: **the consent path assumes the
+> applicant has a Government Gateway account.** Self-employed people generally do.
+> A PAYE-only employee often does not, and for them the 24-hour window is not the
+> binding constraint — HMRC's identity check is. That is a real risk to the four
+> cases in five that need consent, and it is a conversation to have with a
+> prospective customer rather than a surprise later.
+
 Pressing the link opens the page it goes to, **inside a browser frame with the
 address bar visible**, because "where does that link actually take them" is the
 question clients ask and the address answers it better than the page does.

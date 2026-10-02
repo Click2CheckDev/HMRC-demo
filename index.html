@@ -350,6 +350,9 @@
   }
   .email-cta:hover { opacity: 0.9; }
   .email-small { font-size: 12.5px; color: var(--muted); }
+  .email-needs-label { margin-bottom: 6px !important; }
+  .email-needs { margin: 0 0 18px; padding-left: 20px; font-size: 14px; line-height: 1.6; }
+  .email-needs li { margin-bottom: 5px; }
 
   /* The applicant's inbox. A mail client, so the email is seen arriving rather
      than described as having been sent. */
@@ -653,9 +656,13 @@
               <p id="email-greeting"></p>
               <p id="email-intro"></p>
 
+              <p class="email-needs-label"><strong>What you will need</strong></p>
+              <ul class="email-needs" id="email-needs"></ul>
+
               <div id="email-links"></div>
 
               <p>You will sign in with your own Government Gateway details and approve the request. HMRC then send the figures to us directly. <strong>We never see your sign-in details.</strong></p>
+              <p class="email-small"><strong>Do not know your Government Gateway details?</strong> HMRC can recover your user ID or reset your password from their sign-in page. If you have never had an account, you will need to create one first, and HMRC may take a few days to confirm your identity &mdash; so it is worth starting now rather than close to the deadline.</p>
               <p class="email-small">These links expire in 24 hours. If you were not expecting this, you can ignore it &mdash; nothing is shared unless you approve it.</p>
               <p class="email-small">Your reference: <span class="mono" id="email-reference"></span></p>
             </div>
@@ -1794,6 +1801,21 @@
     document.getElementById("email-links").querySelectorAll("button").forEach(b => {
       b.addEventListener("click", () => openApplicantView(b.dataset.leg));
     });
+
+    // What they need before they start. An applicant who gets three screens in and
+    // then discovers they cannot find their user ID abandons it, and an abandoned
+    // consent is a case that expires.
+    const needs = [
+      "Your <strong>Government Gateway user ID</strong> — a 12-digit number HMRC gave you when you set up the account",
+      "Your <strong>Government Gateway password</strong>",
+      "The <strong>phone or authenticator app</strong> you use for HMRC’s access codes, as HMRC will send you a code to type in",
+    ];
+    if (legs.length > 1) {
+      needs.push("Your <strong>company’s</strong> Government Gateway user ID and password as well, which are separate from your own");
+    }
+    needs.push("About five minutes, and somewhere you can read a text message");
+    document.getElementById("email-needs").innerHTML =
+      needs.map(n => `<li>${n}</li>`).join("");
 
     document.getElementById("email-reference").textContent =
       payload.customerReference || order.transactionNumber.slice(0, 12);
