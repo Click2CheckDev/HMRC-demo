@@ -136,10 +136,11 @@ side** — a request without one is accepted — but supplying it improves the c
 of an instant match.
 
 The form requires it anyway, and that is **Click2Check's rule rather than
-Equifax's**. The distinction matters enough to keep in the field hint: an earlier
-version of this demo claimed "No verification is possible without it", which was
-simply untrue, and "we always collect it because it saves chasing the applicant"
-is both accurate and a better reason.
+Equifax's**. The field says nothing beyond being required, which is the right
+amount: an earlier version of this demo claimed "No verification is possible
+without it", and that was simply untrue. If anyone asks on a call, the honest
+answer is that we always collect it because it saves chasing the applicant for
+consent, not because anything rejects an order without it.
 
 ### Data retention and deletion
 
