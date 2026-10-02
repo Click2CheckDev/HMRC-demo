@@ -427,6 +427,26 @@
      presents it, inert so the page stays an illustration. */
   .gov-help { font-size: 13.5px; color: #3a3d42; margin: 22px 0 0; line-height: 1.9; }
   .gov-help strong { display: block; color: #0b0c0c; margin-bottom: 2px; }
+  .auth-block {
+    border: 1px solid var(--border-strong); border-radius: 4px;
+    padding: 18px 20px; margin-bottom: 26px; background: var(--bg);
+  }
+  .auth-label {
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 10px;
+  }
+  .auth-text { font-size: 13px; line-height: 1.6; margin: 0 0 12px; color: var(--ink); }
+  .auth-text a { color: var(--brand-ink); }
+  .auth-confirm {
+    display: flex; gap: 10px; align-items: flex-start;
+    font-size: 13.5px; font-weight: 600; margin-top: 16px; cursor: pointer;
+  }
+  .auth-confirm input { margin-top: 2px; flex: none; }
+  .auth-missing {
+    font-size: 13px; font-weight: 600; color: var(--brand);
+    margin: 10px 0 0; padding-left: 26px;
+  }
+
   .hmrc-track { margin-top: 20px; border-top: 1px solid var(--border); padding-top: 16px; }
   .hmrc-track-label {
     font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em;
@@ -629,6 +649,33 @@
         <input id="employerName" />
         <span class="field-hint">What the applicant says. The report shows it beside what HMRC's records actually hold.</span>
       </div>
+    </div>
+
+    <!-- AUTHORISATION
+         Required by the Equifax contract: the authorisation language has to be in
+         place at the point customer details are collected, which is this form.
+         Confirmed by Equifax on 2 October 2026, who supplied a template and said
+         it may be adapted so long as it still conveys that the details go to the
+         Verification Exchange for payroll data, or to HMRC if payroll data is not
+         available.
+
+         Two adaptations from their template. It assumed a form listing named
+         employers and we do not collect those -- on the HMRC route there is no
+         named employer at all -- so that clause is generalised. And the "used to
+         assess" phrase follows the permissible purpose already on the order, so a
+         tenancy applicant does not read about a mortgage. -->
+    <div class="auth-block">
+      <div class="auth-label">Customer authorisation</div>
+      <p class="auth-text">You expressly authorise <strong>Click2Check</strong> to conduct a search for, and if available obtain, details of your employment and income information, including your salary, job title, length of service and place of work (<strong>&ldquo;Employment Data&rdquo;</strong>). This will be used to assess <strong><span id="auth-purpose"></span></strong>.</p>
+      <p class="auth-text">A search for your Employment and Income Data will be conducted via our partner <strong>Equifax Limited</strong>, in accordance with its <a href="https://verificationexchange.co.uk/privacy-policy" target="_blank" rel="noreferrer">privacy policy</a>, and a request will be sent to <strong>HM Revenue &amp; Customs (HMRC)</strong>. You will be directed to a web address asking you to provide your HMRC authentication details and enable disclosure of your Employment and Income Data. <strong>Click2Check will not have sight of or access to any of your HMRC authentication information.</strong></p>
+      <p class="auth-text">You always have the option not to give your authorisation. Without it, Click2Check may not be able to provide certain products and services to you, or alternative verification of your Employment Data may be required, which may cause some delay.</p>
+
+      <label class="auth-confirm">
+        <input type="checkbox" id="authConfirmed" required />
+        <span>The customer has read the above and given their authorisation.</span>
+      </label>
+      <p class="field-hint">A case cannot be submitted without this. It is recorded against the order.</p>
+      <p class="auth-missing hidden" id="auth-missing">The customer's authorisation has to be confirmed before this case can be submitted.</p>
     </div>
 
     <button type="submit" class="btn-primary">Submit for verification</button>
@@ -1678,6 +1725,19 @@
 
   formView.addEventListener("submit", async (e) => {
     e.preventDefault();
+
+    // Checked here as well as by the `required` attribute. A synthetic submit
+    // event bypasses HTML validation entirely, so relying on the attribute alone
+    // means the one control the Equifax contract actually requires is the one
+    // thing anything scripted can walk straight past.
+    const confirmed = document.getElementById("authConfirmed");
+    if (!confirmed.checked) {
+      document.getElementById("auth-missing").classList.remove("hidden");
+      confirmed.focus();
+      return;
+    }
+    document.getElementById("auth-missing").classList.add("hidden");
+
     const payload = {
       firstName: document.getElementById("firstName").value,
       lastName: document.getElementById("lastName").value,
@@ -1787,8 +1847,17 @@
 
   applicantSelect.innerHTML = DEMO_APPLICANTS
     .map((a, i) => `<option value="${i}">${a.label}</option>`).join("");
-  applicantSelect.addEventListener("change", applyApplicant);
+  function renderAuthPurpose() {
+    const purpose = document.getElementById("identifyingPurpose").value;
+    document.getElementById("auth-purpose").textContent =
+      "your " + (PURPOSE_PHRASES[purpose] || "application");
+  }
+
+  document.getElementById("identifyingPurpose").addEventListener("change", renderAuthPurpose);
+
+  applicantSelect.addEventListener("change", () => { applyApplicant(); renderAuthPurpose(); });
   applyApplicant();
+  renderAuthPurpose();
 
   // Mail that was already there, so the one that matters is seen arriving rather
   // than sitting alone in an empty inbox.
