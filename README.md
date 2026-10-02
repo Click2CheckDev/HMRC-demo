@@ -30,7 +30,7 @@ The case list seeds one of each, so all of them can be shown:
 | `READY` | HMRC has released it; the report is being retrieved |
 | `DELIVERED` | finished, report and PDF available |
 | `FAILED` | no payroll match and no consent route |
-| `EXPIRED` | 24 hours passed with no response |
+| `EXPIRED` | the consent window closed with no response |
 
 `PENDING` means one thing: created, and waiting for a worker to submit it to
 Payroll. In the live service that is seconds, which is why only one is seeded.
@@ -43,7 +43,7 @@ Opening a case shows what a broker can actually do about it at that point:
 - **Pending** — what it is waiting on, and a way to move it past that
 - **Awaiting consent** — the consent link, ready to resend, and a refresh
 - **Polling or ready** — what is being waited on, and that it is followed
-  automatically for up to 24 hours
+  automatically until the consent link expires
 - **Expired** — a *Resume checking* button, which is the real service's
   `POST /orders/<id>/refresh/`. That endpoint only accepts expired orders, which
   is why the button appears nowhere else
@@ -109,7 +109,7 @@ shows it: **the applicant's inbox**, with the email landing in it.
 
 The email is personalised, addressed to them by name, naming the client who asked
 and why in the applicant's own terms rather than the broker's regulatory label,
-and carrying their reference and the 24-hour limit. It arrives a moment after the
+and carrying their reference and the expiry date. It arrives a moment after the
 inbox opens, unread, among mail that was already there, because that is the moment
 the whole journey depends on.
 
@@ -133,7 +133,7 @@ deadline.
 
 > Worth saying out loud when showing this: **the consent path assumes the
 > applicant has a Government Gateway account.** Self-employed people generally do.
-> A PAYE-only employee often does not, and for them the 24-hour window is not the
+> A PAYE-only employee often does not, and for them the consent window is not the
 > binding constraint — HMRC's identity check is. That is a real risk to the four
 > cases in five that need consent, and it is a conversation to have with a
 > prospective customer rather than a surprise later.
@@ -142,13 +142,44 @@ Pressing the link opens the page it goes to, **inside a browser frame with the
 address bar visible**, because "where does that link actually take them" is the
 question clients ask and the address answers it better than the page does.
 
+**The consent window is 120 hours, not 24.** Measured rather than assumed: the UAT
+order of 2 October was created at 12:05 and the applicant's email said "Expires on:
+2026-10-07 12:05 PM", five days to the minute. The demo said 24 hours everywhere
+before that, which was *our own polling window* rather than theirs — so the demo
+and the applicant's own email contradicted each other. The case detail now shows
+the real date and says the applicant has been given it.
+
+**HMRC's status values are shown on the case**, in the casing their API actually
+returns, with what each means to us:
+
+| Value | What it means |
+|---|---|
+| `In Progress` | waiting on the applicant, or on HMRC releasing the record |
+| `Ready` | released; the report is fetched next |
+| `Downloaded` | **also fetchable** — not a sign the report has gone |
+| `Delivered` | fetchable too, and **absent from their written list** |
+| `Expired` | the window closed with no authorisation |
+
+Two of those are worth a client's attention. `Downloaded` reads as though the
+report has already gone somewhere; treating it as unavailable would abandon a case
+whose report is sitting there ready. And `Delivered` was not in the list the
+provider sent on 25 September — their API returned it the same afternoon.
+
 That page is styled as a government service and asks for the three things HMRC
 ask for: the Government Gateway user ID, the password, and the access code HMRC
 send. It states what approving actually shares, and that **no address is asked
 for** — HMRC identify the person from the account itself.
 
+The fields arrive **pre-populated**, so it reads as a form somebody has filled in
+rather than empty boxes, and the recovery routes HMRC offer are shown — *forgotten
+your user ID*, *forgotten your password*, *not received your access code*.
+
 It is deliberately **not a replica.** No crown, no GOV.UK wordmark, a simulation
-banner above it, and every field readonly with a placeholder value. A working copy
+banner above it, every field **readonly**, no form element, nothing to submit, and
+**none of those recovery routes is a working link.** Operable recovery flows are
+what make a copy of a credential form convincing, which is the reason they are
+text. The guidance an applicant actually needs is in the email, which tells them
+HMRC can recover a user ID or reset a password and that a new account takes days. A working copy
 of a government sign-in page asking for a user ID, password and access code is a
 phishing kit whatever it was built for, and this repository is public.
 Recognisable is the useful part; convincing is not. There are checks for the
@@ -275,7 +306,7 @@ Two things in particular are simplifications:
   does in their own time — minutes or hours after the case is opened, not
   seconds. Opening the consent link shows their side of it.
 - **Timings are compressed.** The real service follows a pending case for up to
-  24 hours. Here the steps take about a second each, so the sequence can be shown
+  five days. Here the steps take about a second each, so the sequence can be shown
   rather than waited out.
 
 ## Running it without the internet

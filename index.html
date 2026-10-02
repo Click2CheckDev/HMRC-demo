@@ -423,6 +423,33 @@
     color: #6a6d72; cursor: not-allowed; font-family: inherit;
   }
   .gov-hint { display: block; font-size: 12.5px; color: #6a6d72; margin-top: 5px; }
+  /* Deliberately not <a> elements. Underlined so it reads as HMRC's page
+     presents it, inert so the page stays an illustration. */
+  .gov-help { font-size: 13.5px; color: #3a3d42; margin: 22px 0 0; line-height: 1.9; }
+  .gov-help strong { display: block; color: #0b0c0c; margin-bottom: 2px; }
+  .hmrc-track { margin-top: 20px; border-top: 1px solid var(--border); padding-top: 16px; }
+  .hmrc-track-label {
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 10px;
+  }
+  .hmrc-steps { list-style: none; margin: 0 0 10px; padding: 0; }
+  .hmrc-steps li {
+    display: flex; gap: 10px; align-items: baseline;
+    font-size: 13px; padding: 5px 0; color: var(--muted);
+  }
+  .hmrc-steps li .tick { width: 14px; flex: none; text-align: center; }
+  .hmrc-steps li.reached { color: var(--ink); }
+  .hmrc-steps li.current { color: var(--brand-ink); font-weight: 600; }
+  .hmrc-steps code {
+    font-family: var(--font-mono); font-size: 12px;
+    background: var(--bg); padding: 1px 6px; border-radius: 3px;
+  }
+  .hmrc-steps .meaning { color: var(--muted); font-weight: 400; }
+
+  .gov-help-item {
+    display: block; color: #1d4f91; text-decoration: underline;
+    text-underline-offset: 2px; cursor: default;
+  }
   .gov-note {
     border-left: 4px solid #0b0c0c; padding: 4px 0 4px 14px;
     font-size: 13.5px; color: #3a3d42; margin: 22px 0 0;
@@ -663,7 +690,7 @@
 
               <p>You will sign in with your own Government Gateway details and approve the request. HMRC then send the figures to us directly. <strong>We never see your sign-in details.</strong></p>
               <p class="email-small"><strong>Do not know your Government Gateway details?</strong> HMRC can recover your user ID or reset your password from their sign-in page. If you have never had an account, you will need to create one first, and HMRC may take a few days to confirm your identity &mdash; so it is worth starting now rather than close to the deadline.</p>
-              <p class="email-small">These links expire in 24 hours. If you were not expecting this, you can ignore it &mdash; nothing is shared unless you approve it.</p>
+              <p class="email-small">These links expire on <span id="email-expires"></span>, five days from today. If you were not expecting this, you can ignore it &mdash; nothing is shared unless you approve it.</p>
               <p class="email-small">Your reference: <span class="mono" id="email-reference"></span></p>
             </div>
           </div>
@@ -674,7 +701,7 @@
     <div class="actions">
       <button class="btn-secondary" id="inbox-cases-btn">Back to the case list</button>
     </div>
-    <p class="demo-note">The applicant does this in their own time &mdash; minutes or hours after the case is opened, not seconds. Until they do, the case sits at <span class="status-pill awaiting_consent">AWAITING CONSENT</span>, and is closed as <span class="status-pill expired">EXPIRED</span> if 24 hours pass.</p>
+    <p class="demo-note">The applicant does this in their own time &mdash; minutes or hours after the case is opened, not seconds. Until they do, the case sits at <span class="status-pill awaiting_consent">AWAITING CONSENT</span>, and is closed as <span class="status-pill expired">EXPIRED</span> once the five days are up.</p>
   </div>
 
   <!-- STEP 2c-ii: THE GOVERNMENT GATEWAY SIGN-IN
@@ -715,19 +742,40 @@
           <h2 class="gov-h1" id="gov-heading"></h2>
           <p class="gov-lede" id="gov-lede"></p>
 
+          <!-- Pre-populated so it reads as a form somebody has filled in, which
+               demonstrates the step better than empty boxes and better than the
+               jokey placeholders that were here before.
+
+               Still readonly, still no <form>, still nothing to submit. Those are
+               the properties that matter: the page cannot accept a credential or
+               send one anywhere. Making the values look plausible does not change
+               that, and a field reading "not a real password" in front of a
+               customer looked amateurish. -->
           <div class="gov-field">
             <label id="gov-id-label"></label>
-            <input value="example-user-id" readonly autocomplete="off" tabindex="-1" />
+            <input class="mono" value="487291503664" readonly autocomplete="off" tabindex="-1" aria-readonly="true" />
           </div>
           <div class="gov-field">
             <label>Password</label>
-            <input value="not a real password" readonly autocomplete="off" tabindex="-1" />
+            <input value="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" readonly autocomplete="off" tabindex="-1" aria-readonly="true" />
           </div>
           <div class="gov-field">
             <label>Access code</label>
-            <input value="000000" readonly autocomplete="off" tabindex="-1" />
-            <span class="gov-hint">Sent to the applicant by HMRC. Two-factor authentication is required on their side, not ours.</span>
+            <input class="mono" value="407291" readonly autocomplete="off" tabindex="-1" aria-readonly="true" />
+            <span class="gov-hint">HMRC text this to the applicant. Two-factor authentication is on their side, not ours.</span>
           </div>
+
+          <!-- Static text, not links. HMRC do offer recovery, and a viewer should
+               be able to see that it exists -- but working recovery flows are what
+               make a replica of a credential form convincing, so these do not
+               operate. The guidance an applicant actually needs is in the email,
+               which tells them HMRC can recover a user ID or reset a password and
+               that a new account takes days. -->
+          <p class="gov-help"><strong>Problems signing in?</strong>
+            <span class="gov-help-item">Forgotten your Government Gateway user ID</span>
+            <span class="gov-help-item">Forgotten your password</span>
+            <span class="gov-help-item">Not received your access code</span>
+          </p>
 
           <p class="gov-note" id="gov-scope"></p>
         </div>
@@ -917,12 +965,22 @@
         <button class="btn-primary" id="pd-consent-btn">Simulate the applicant consenting</button>
       </div>
       <p class="note" id="pd-refresh-note"></p>
+
+      <!-- What HMRC's side reports back, in their own words. Worth showing because
+           the values are not guessable and two of them are not in the written
+           list the provider sent on 25 September: "Delivered" was missing, and
+           "Downloaded" means the record is available rather than gone. -->
+      <div class="hmrc-track">
+        <div class="hmrc-track-label">HMRC status, as reported back</div>
+        <ol class="hmrc-steps" id="pd-hmrc-steps"></ol>
+        <p class="note" id="pd-hmrc-expiry"></p>
+      </div>
     </div>
 
     <!-- Automatic polling gave up. POST /orders/<id>/refresh/ restarts it, and
          only works on an expired order -- it 400s on anything else. -->
     <div class="panel danger hidden" id="pd-expired-panel">
-      <p>Automatic checking gave up after 24 hours with no response from HMRC. Resume it manually if you still expect this case to complete.</p>
+      <p>The consent window closed with no response from HMRC. Resume checking manually if you still expect this case to complete.</p>
       <div class="panel-actions">
         <button class="btn-secondary" id="pd-resume-btn">Resume checking</button>
       </div>
@@ -1817,6 +1875,10 @@
     document.getElementById("email-needs").innerHTML =
       needs.map(n => `<li>${n}</li>`).join("");
 
+    document.getElementById("email-expires").textContent =
+      consentExpiry(order).toLocaleString("en-GB",
+        { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
+
     document.getElementById("email-reference").textContent =
       payload.customerReference || order.transactionNumber.slice(0, 12);
   }
@@ -2123,6 +2185,64 @@
   // users able to do it.
   //
   // PERSONAL_DATA_RETENTION_DAYS in the real service.
+  // How long a consent link lives, measured rather than assumed. The UAT order of
+  // 2 October 2026 was created at 12:05 and its email said "Expires on:
+  // 2026-10-07 12:05 PM" -- 120 hours to the minute.
+  //
+  // The demo said 24 hours everywhere before that, which was our own polling
+  // window rather than theirs, and the applicant's email contradicted it.
+  const CONSENT_WINDOW_HOURS = 120;
+
+  // What /apari/status returns, in their casing, with what each one means to us.
+  //
+  // Their written answer on 25 September listed four: "In progress", "Ready",
+  // "Downloaded", "Expired". Their API returned "Delivered" the same afternoon on
+  // an order whose report was fetchable, so the written list was incomplete.
+  //
+  // "Downloaded" is the one worth showing a client. It reads like the report has
+  // gone somewhere, and it is treated as available to fetch -- the alternative
+  // reading would abandon a case whose report is sitting there ready.
+  const HMRC_STATUSES = [
+    { value: "In Progress", meaning: "waiting on the applicant, or on HMRC releasing the record",
+      statuses: ["AWAITING_CONSENT", "POLLING"] },
+    { value: "Ready", meaning: "HMRC have released it; we fetch the report next",
+      statuses: ["READY"] },
+    { value: "Downloaded", meaning: "also fetchable — not a sign the report has gone",
+      statuses: ["READY"] },
+    { value: "Delivered", meaning: "fetchable too, and absent from their written list",
+      statuses: ["DELIVERED"] },
+    { value: "Expired", meaning: "the consent window closed with no authorisation",
+      statuses: ["EXPIRED"] },
+  ];
+
+  function renderHmrcTrack(order) {
+    const reached = {
+      AWAITING_CONSENT: 0, POLLING: 0, READY: 1, DELIVERED: 3, EXPIRED: 4,
+    }[order.status];
+
+    document.getElementById("pd-hmrc-steps").innerHTML = HMRC_STATUSES.map((s, i) => {
+      const isCurrent = i === reached;
+      const isPast = reached !== undefined && i < reached && s.value !== "Expired";
+      const cls = isCurrent ? "current" : (isPast ? "reached" : "");
+      const tick = isCurrent ? "→" : (isPast ? "✓" : "·");
+      return `<li class="${cls}"><span class="tick">${tick}</span>`
+        + `<span><code>${s.value}</code> <span class="meaning">${s.meaning}</span></span></li>`;
+    }).join("");
+
+    // The window is theirs, not ours, and the applicant has been told the date.
+    const expiry = consentExpiry(order);
+    document.getElementById("pd-hmrc-expiry").textContent =
+      "The consent link expires " + expiry.toLocaleString("en-GB",
+        { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })
+      + " — " + CONSENT_WINDOW_HOURS + " hours after the case was opened. "
+      + "The applicant is given that date in their email.";
+  }
+
+  function consentExpiry(order) {
+    const from = new Date(order.createdAt);
+    return new Date(from.getTime() + CONSENT_WINDOW_HOURS * 3600 * 1000);
+  }
+
   const RETENTION_DAYS = 180;
 
   // Only a finished case can be deleted. Deleting one still being polled would
@@ -2410,6 +2530,7 @@
         updateCaseInPortal(order);
       }
       document.getElementById("pd-consent-copy-note").textContent = "";
+      renderHmrcTrack(order);
       const consentLine = document.getElementById("pd-consent-line");
       consentLine.classList.toggle("hidden", !order.consentUrl);
       if (order.consentUrl) document.getElementById("pd-consent-url").textContent = order.consentUrl;
@@ -2418,7 +2539,7 @@
       // submitted yet, so there is nothing to poll.
       document.getElementById("pd-pending-detail").textContent = status === "PENDING"
         ? "Nothing has been sent to Payroll yet, so there is nothing to check."
-        : "Followed automatically for up to 24 hours, then closed as EXPIRED.";
+        : "Followed automatically until the consent link expires, then closed as EXPIRED.";
 
       // Only offer to consent on a case that is actually waiting for it.
       document.getElementById("pd-consent-btn").classList.toggle("hidden", !wantsConsent);
