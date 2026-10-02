@@ -315,6 +315,33 @@ Two things in particular are simplifications:
   five days. Here the steps take about a second each, so the sequence can be shown
   rather than waited out.
 
+### On a phone
+
+The page had no media queries at all, which with a viewport meta tag set is the
+worse of the two failures: the browser renders at device width and everything
+overflows, rather than zooming out to something legible.
+
+Two breakpoints now. 820px for tablets and narrow windows, 560px for phones.
+
+| | |
+|---|---|
+| Sidebar | becomes a scrollable strip above the content. 300px of navigation on a 390px screen leaves nothing for the page |
+| Form, stats, detail grid | drop to one column |
+| Inbox | the reading pane goes under the message list rather than beside it |
+| **Case list** | **stacks** into one card per case, each cell labelled |
+| **Report tables** | **scroll** sideways inside the card |
+
+The last two are deliberately different. The case list is the landing view and a
+horizontally scrolling list is a list nobody reads, so it stacks and each cell
+carries its own label in place of the hidden header row. A year-by-year income
+table does not stack into anything comparable — the columns have to stay side by
+side — so those scroll instead.
+
+Checked as far as it can be: the rules parse, sit in the right media query, and
+the markup the stacked layout depends on is emitted. **None of that proves it
+looks right** — jsdom does no layout, so the only real test is opening it on a
+phone.
+
 ## Running it without the internet
 
 Download `index.html` and `logo.png` into the same folder and open the HTML file
