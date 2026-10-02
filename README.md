@@ -58,22 +58,55 @@ button is not offered at all.
 A case can be followed all the way through from the list: pending, submitted,
 consent, polling, ready, delivered report.
 
-### The three outcomes
+### Five test applicants, not an outcome switch
 
-A real case ends up on one of three paths, and nobody chooses which:
+The demo used to ask which outcome a case should take. That was its biggest
+remaining fiction: **nobody chooses.** What happens follows from what Equifax and
+HMRC hold about the person.
 
-- **Found at Equifax** — Equifax already holds the person in its own payroll
-  data, and the report comes back in seconds with no involvement from the
-  applicant.
-- **Forwarded to HMRC** — Equifax does not hold them, so the request goes to
-  HMRC instead and the person is identified through the **Government Gateway**.
-  They are sent a link, sign in with their own credentials, and authorise the
-  data share. Until they act, the case sits at `AWAITING CONSENT` and is
-  re-checked every five minutes for up to 24 hours, after which it is closed as
-  `EXPIRED`.
-- **Not found either way** — neither Equifax's payroll data nor the HMRC route
-  produces a match, so the case is closed as `FAILED`. Usually an NI number,
-  date of birth or surname that does not match what is held.
+So there is a list of test identities instead, each with their own records.
+Picking one fills the form, and every field stays editable.
+
+| Applicant | What their records produce |
+|---|---|
+| **Marcy Okonjo** | Equifax do not hold them, so the request goes to HMRC and waits on the applicant. **This is the usual case** — around four in five. |
+| **Alan Pettifer** | An instant match in Equifax's own payroll data. No HMRC, no consent, report in one step. Equifax put this at 15–20%. |
+| **Dev Ramanathan** | Self-employed. Consent is still needed, and the report that comes back has **no employment section at all**. |
+| **Josie Hartnell** | No match at Equifax or HMRC. Closes as `FAILED`. Usually an NI number, date of birth or surname that does not match what is held. |
+| **Ewan Blaylock** | The consent link is sent and nothing happens. After 24 hours of five-minute checks the case closes as `EXPIRED`, and can be resumed by hand. |
+
+Ewan Blaylock reaches exactly the same screen as Marcy Okonjo, which is the
+point: a broker cannot tell in advance which of the two they are dealing with.
+That is why the 24-hour window exists.
+
+### The report shows only what HMRC hold
+
+Three different report shapes, because three different people:
+
+- **Employment only** — payroll records and tax totals. No self-employment or
+  other-income sections, because there is nothing to put in them.
+- **Employment and a business** — the shape of Equifax's own sample report,
+  which is where every figure in this demo comes from.
+- **Self-employed** — no employment section, and no *Retrieved Personal
+  Information* section either. A sole trader has no employer record, and that
+  record is the only thing HMRC enrich the name and address from.
+
+Empty sections are **absent, not blank**. A heading over an empty table reads as
+missing data; a section that is not there reads as not applicable, which is what
+it is. The live report does the same.
+
+### Consent, step by step
+
+The applicant signs in with their **Government Gateway ID, password and the
+two-factor code** HMRC send them. Click2Check never sees any of it.
+
+There is **no address step**, which is worth saying because it is easy to assume
+otherwise: HMRC identify the person from the Government Gateway account itself.
+The address on the order form is used for the Equifax lookup, not for consent.
+
+Once they authorise it, the case moves `AWAITING CONSENT` → `POLLING` → `READY` →
+`DELIVERED` on its own. `READY` is brief but real: one background task sees that
+HMRC has released the record, and a second one fetches it.
 
 ### Residential and Commercial are the same thing
 
@@ -98,9 +131,15 @@ rather than waiting for luck.
 demo defaults to it. Worth saying out loud when showing this: results are usually
 not instant, and the applicant has to be reachable and willing.
 
-Equifax also confirmed the National Insurance number is **not mandatory**, but
-supplying it improves the chance of an instant match. Worth collecting for that
-reason rather than because anything rejects an order without it.
+Equifax also confirmed the National Insurance number is **not mandatory on their
+side** — a request without one is accepted — but supplying it improves the chance
+of an instant match.
+
+The form requires it anyway, and that is **Click2Check's rule rather than
+Equifax's**. The distinction matters enough to keep in the field hint: an earlier
+version of this demo claimed "No verification is possible without it", which was
+simply untrue, and "we always collect it because it saves chasing the applicant"
+is both accurate and a better reason.
 
 ### Data retention and deletion
 
@@ -181,7 +220,15 @@ original commit history intact.
 
 The consent journey, the failure outcomes and the National Insurance, email and
 mobile fields were added in September 2026, so that the demo shows the paths a
-real case can take rather than only the one that succeeds instantly.
+real case can take rather than only the one that succeeds instantly. In October
+the outcome selector was replaced by a list of test applicants, and the retention
+section was added.
+
+Every figure in the report comes from Equifax's own sample report. Only the names
+are substituted: applicants, employers and businesses are invented, the
+National Insurance numbers use the `QQ` prefix HMRC never issues, and the mobile
+numbers are in Ofcom's reserved drama range. None of it can belong to a real
+person or company.
 
 ---
 

@@ -414,6 +414,16 @@
     <h1 class="title">Open a verification request</h1>
     <p class="subtitle">Enter the applicant's details below. This is a demo using mock data — no real verification lookup is made.</p>
 
+    <div class="demo-control">
+      <div class="demo-control-label">Demo control &mdash; not part of the product</div>
+      <div class="field">
+        <label for="demoApplicant">Pick a test applicant</label>
+        <select id="demoApplicant"></select>
+        <span class="field-hint" id="demoApplicantHint"></span>
+      </div>
+      <p class="demo-note" style="margin-top:8px;">Nobody chooses an outcome in the live service: what happens next follows from what Equifax and HMRC hold about the person. These are fixed test identities with known records, so each path can be shown on demand. Picking one fills the form below; every field stays editable.</p>
+    </div>
+
     <div class="grid">
       <div class="field">
         <label>First name</label>
@@ -428,9 +438,9 @@
         <input id="dob" type="date" required />
       </div>
       <div class="field">
-        <label>National Insurance number <span style="font-weight:400; color:var(--muted);">(optional)</span></label>
-        <input id="niNumber" placeholder="QQ123456C" autocomplete="off" spellcheck="false" />
-        <span class="field-hint">Not required, but worth collecting: Equifax confirm it improves the chance of an instant match, which saves asking the applicant to authenticate.</span>
+        <label>National Insurance number</label>
+        <input id="niNumber" placeholder="QQ123456C" autocomplete="off" spellcheck="false" required />
+        <span class="field-hint">Required by Click2Check. Equifax will accept a request without one &mdash; they confirmed that in September &mdash; but supplying it improves the chance of an instant match, which saves asking the applicant to authenticate. Collecting it every time is our rule, not theirs.</span>
       </div>
       <div class="field span2">
         <label>Address line 1</label>
@@ -485,18 +495,7 @@
       </div>
     </div>
 
-    <div class="demo-control">
-      <div class="demo-control-label">Demo control &mdash; not part of the product</div>
-      <div class="field">
-        <label for="demoOutcome">Which outcome should this case take?</label>
-        <select id="demoOutcome">
-          <option value="CONSENT">Not at Equifax &mdash; forwarded to HMRC for consent</option>
-          <option value="INSTANT">Found in Equifax's own payroll records</option>
-          <option value="NO_RECORD">Not found at Equifax or HMRC</option>
-        </select>
-        <span class="field-hint">A real case takes whichever of these three paths the records dictate &mdash; nobody chooses. Equifax put the instant match rate at <strong>15&ndash;20%</strong>, so roughly four cases in five need the applicant to authenticate with HMRC. This selector is here so each path can be shown on demand.</span>
-      </div>
-    </div>
+    <p class="note-box">Equifax hold an instant payroll match for only <strong>15&ndash;20%</strong> of applicants, so roughly four cases in five need the applicant to authenticate with HMRC themselves. Most of the test identities above reflect that.</p>
 
     <button type="submit" class="btn-primary">Submit for verification</button>
   </form>
@@ -523,7 +522,7 @@
 
     <ol class="steps">
       <li><strong>We send the applicant a consent link.</strong> <span id="consent-delivery"></span></li>
-      <li><strong>They sign in to HMRC through GOV.UK</strong> with their own Government Gateway credentials. Click2Check never sees those credentials.</li>
+      <li><strong>They sign in with their Government Gateway details</strong> on the verification page: Gateway ID, password, and the two-factor code HMRC sends them. Click2Check never sees any of it, and there is no address step &mdash; HMRC identify the person from the account itself.</li>
       <li><strong>They approve the request.</strong> HMRC releases the payroll record and the case continues on its own &mdash; nobody has to come back and chase it.</li>
     </ol>
 
@@ -593,28 +592,28 @@
       <div class="row"><span class="label">Current Employment -- Work Phone Number</span><span class="value">-</span></div>
     </div>
 
-    <div class="section">
+    <div class="section" id="r-sec-retrieved">
       <h2>Retrieved Personal Information</h2>
       <div class="row"><span class="label">Name</span><span class="value" id="r-retrieved-name"></span></div>
       <div class="row"><span class="label">Address</span><span class="value" id="r-retrieved-address"></span></div>
     </div>
 
-    <div class="section">
+    <div class="section" id="r-sec-payroll">
       <h2>Payroll HMRC Data</h2>
       <div id="r-payroll-employers"></div>
     </div>
 
-    <div class="section">
+    <div class="section" id="r-sec-self-employment">
       <h2>Self-Employment Income</h2>
       <div id="r-self-employment"></div>
     </div>
 
-    <div class="section">
+    <div class="section" id="r-sec-other-income">
       <h2>Other Sources of Income</h2>
       <div id="r-other-income"></div>
     </div>
 
-    <div class="section">
+    <div class="section" id="r-sec-taxes">
       <h2>Taxes Paid</h2>
       <div id="r-taxes-paid"></div>
     </div>
@@ -761,28 +760,28 @@
       <div class="row"><span class="label">Current Employment -- Work Phone Number</span><span class="value">-</span></div>
     </div>
 
-    <div class="section">
+    <div class="section" id="pd-sec-retrieved">
       <h2>Retrieved Personal Information</h2>
       <div class="row"><span class="label">Name</span><span class="value" id="pd-retrieved-name"></span></div>
       <div class="row"><span class="label">Address</span><span class="value" id="pd-retrieved-address"></span></div>
     </div>
 
-    <div class="section">
+    <div class="section" id="pd-sec-payroll">
       <h2>Payroll HMRC Data</h2>
       <div id="pd-payroll-employers"></div>
     </div>
 
-    <div class="section">
+    <div class="section" id="pd-sec-self-employment">
       <h2>Self-Employment Income</h2>
       <div id="pd-self-employment"></div>
     </div>
 
-    <div class="section">
+    <div class="section" id="pd-sec-other-income">
       <h2>Other Sources of Income</h2>
       <div id="pd-other-income"></div>
     </div>
 
-    <div class="section">
+    <div class="section" id="pd-sec-taxes">
       <h2>Taxes Paid</h2>
       <div id="pd-taxes-paid"></div>
     </div>
@@ -890,7 +889,7 @@
   // test record regardless of what was submitted.
   const FIXED_EMPLOYERS = [
     {
-      employerName: "Test1 Ltd",
+      employerName: "Northgate Logistics Ltd",
       firstPayDate: "27-01-2023", lastPayDate: "27-09-2024",
       annual: [
         { period: "2024-25", taxableIncome: 19922.22, taxDeduction: 2726.40, niDeduction: 1057.98 },
@@ -913,7 +912,7 @@
       ],
     },
     {
-      employerName: "Test2 Ltd",
+      employerName: "Brightwell Retail Ltd",
       firstPayDate: "21-01-2021", lastPayDate: "11-02-2022",
       annual: [
         { period: "2022-23", taxableIncome: 15924.78, taxDeduction: 726.40, niDeduction: 157.98 },
@@ -922,7 +921,7 @@
       payPeriod: [],
     },
     {
-      employerName: "Test3 Ltd",
+      employerName: "Calder Engineering Ltd",
       firstPayDate: "27-01-2019", lastPayDate: "11-12-2020",
       annual: [
         { period: "2020-21", taxableIncome: 39544.08, taxDeduction: 6426.40, niDeduction: 2987.98 },
@@ -932,8 +931,8 @@
   ];
 
   const FIXED_SELF_EMPLOYMENT = [
-    { year: "2022-23", business: "Test4 Ltd", turnover: 28503.00, expenses: null, carriedForwardLosses: null, resultingProfitOrLoss: 28503.00 },
-    { year: "2021-22", business: "Test5 Ltd", turnover: 31925.00, expenses: null, carriedForwardLosses: null, resultingProfitOrLoss: 31925.00 },
+    { year: "2022-23", business: "Quayside Joinery", turnover: 28503.00, expenses: null, carriedForwardLosses: null, resultingProfitOrLoss: 28503.00 },
+    { year: "2021-22", business: "Tyne Valley Crafts", turnover: 31925.00, expenses: null, carriedForwardLosses: null, resultingProfitOrLoss: 31925.00 },
   ];
 
   const FIXED_OTHER_INCOME = [
@@ -948,19 +947,128 @@
     { year: "2020-21", totalTax: 7145.00, totalNI: 6673.00 },
   ];
 
-  // No calculation here -- just the fixed data above, plus the retrieved
-  // name/address enrichment pattern the real sample shows (middle initial
-  // and "Apartment" prefix added by the verification, same as the sample).
-  function buildMockReport(payload) {
+  // Three report shapes, because HMRC hold different things about different
+  // people and the real report renders only what is there.
+  //
+  // No calculation anywhere -- just the fixed data above, plus the retrieved
+  // name/address enrichment pattern Equifax's own sample shows (middle initial
+  // and an "Apartment" prefix added by the verification).
+  const REPORT_SHAPES = {
+    // A plain PAYE applicant. HMRC hold payroll records and the tax totals and
+    // nothing else, so there is no self-employment or other income to show.
+    PAYE_ONLY: {
+      employers: FIXED_EMPLOYERS, selfEmployment: [], otherIncome: [],
+      taxesPaid: FIXED_TAXES_PAID, retrieved: true,
+    },
+    // Employment with a business alongside it. This is the shape of Equifax's
+    // own sample report, which is where every figure above comes from.
+    MIXED: {
+      employers: FIXED_EMPLOYERS, selfEmployment: FIXED_SELF_EMPLOYMENT,
+      otherIncome: FIXED_OTHER_INCOME, taxesPaid: FIXED_TAXES_PAID, retrieved: true,
+    },
+    // Self-employed, so there is no employer at all: Equifax return
+    // apariResponse as an empty list and everything is in annualIncomeSummaries.
+    //
+    // No employer entry also means no employeeInformation, and that is where the
+    // retrieved name and address come from -- so this report has neither, and
+    // neither does the real one. Worth showing: a verification-of-income product
+    // produced a blank document for this whole class of applicant until the read
+    // side was fixed on 29 September.
+    SELF_EMPLOYED: {
+      employers: [], selfEmployment: FIXED_SELF_EMPLOYMENT,
+      otherIncome: FIXED_OTHER_INCOME, taxesPaid: FIXED_TAXES_PAID, retrieved: false,
+    },
+  };
+
+  function buildMockReport(payload, kind) {
+    const shape = REPORT_SHAPES[kind] || REPORT_SHAPES.MIXED;
     return {
-      employers: FIXED_EMPLOYERS,
-      selfEmployment: FIXED_SELF_EMPLOYMENT,
-      otherIncome: FIXED_OTHER_INCOME,
-      taxesPaid: FIXED_TAXES_PAID,
-      retrievedName: payload.firstName + " L " + payload.lastName,
-      retrievedAddress: "Apartment " + payload.addressLine1 + ", " + payload.postalCode,
+      employers: shape.employers,
+      selfEmployment: shape.selfEmployment,
+      otherIncome: shape.otherIncome,
+      taxesPaid: shape.taxesPaid,
+      retrievedName: shape.retrieved ? payload.firstName + " L " + payload.lastName : null,
+      retrievedAddress: shape.retrieved
+        ? "Apartment " + payload.addressLine1 + ", " + payload.postalCode : null,
     };
   }
+
+  // Which report sections render. The real template wraps each one in {% if %},
+  // so an empty section does not appear at all -- heading included. A heading
+  // over an empty table reads as missing data; a section that is absent reads as
+  // not applicable, which is what it is.
+  function applyReportSections(prefix, report) {
+    const visible = {
+      "sec-retrieved": !!(report.retrievedName || report.retrievedAddress),
+      "sec-payroll": report.employers.length > 0,
+      "sec-self-employment": report.selfEmployment.length > 0,
+      "sec-other-income": report.otherIncome.length > 0,
+      "sec-taxes": report.taxesPaid.length > 0,
+    };
+    Object.entries(visible).forEach(([sec, on]) => {
+      const el = document.getElementById(prefix + "-" + sec);
+      if (el) el.classList.toggle("hidden", !on);
+    });
+  }
+
+  // The test identities. Each one's outcome is a property of their records
+  // rather than a setting, which is the whole point: in the live service nobody
+  // chooses what happens, the records decide.
+  //
+  // QQ is a prefix HMRC never issues and 07700 900xxx is Ofcom's reserved drama
+  // range, so none of these can belong to a real person.
+  const DEMO_APPLICANTS = [
+    {
+      label: "Marcy Okonjo — PAYE, needs HMRC consent (the usual case)",
+      hint: "Equifax do not hold this person's payroll data, so the request goes to HMRC and waits on the applicant. Around four cases in five look like this.",
+      outcome: "CONSENT", reportKind: "MIXED",
+      firstName: "Marcy", lastName: "Okonjo", dob: "1985-03-14", niNumber: "QQ123456C",
+      addressLine1: "12 Quayside", postalCode: "NE1 1AQ",
+      email: "marcy.okonjo@example.com", mobile: "07700 900102",
+      customerReference: "ABC-1042", employerName: "Northgate Logistics Ltd",
+      verificationType: "VOI", identifyingPurpose: "MO",
+    },
+    {
+      label: "Alan Pettifer — instant match in Equifax's own payroll data",
+      hint: "Found without involving HMRC at all, so the report comes back in one step and the applicant does nothing. Equifax put this at 15-20% of applicants.",
+      outcome: "INSTANT", reportKind: "PAYE_ONLY",
+      firstName: "Alan", lastName: "Pettifer", dob: "1979-11-02", niNumber: "QQ123457C",
+      addressLine1: "4 Grainger Street", postalCode: "NE1 5JQ",
+      email: "alan.pettifer@example.com", mobile: "07700 900101",
+      customerReference: "ABC-1041", employerName: "Northgate Logistics",
+      verificationType: "VOI", identifyingPurpose: "MO",
+    },
+    {
+      label: "Dev Ramanathan — self-employed, no employer",
+      hint: "Consent is still needed. The report that comes back has no employment section at all: a sole trader's income sits in HMRC's annual summaries instead, and there is no employer record for HMRC to have enriched the name and address from.",
+      outcome: "CONSENT", reportKind: "SELF_EMPLOYED",
+      firstName: "Dev", lastName: "Ramanathan", dob: "1990-06-21", niNumber: "QQ123458C",
+      addressLine1: "9 Pilgrim Street", postalCode: "NE1 6QE",
+      email: "dev.ramanathan@example.com", mobile: "07700 900103",
+      customerReference: "ABC-1043", employerName: "",
+      verificationType: "VOI", identifyingPurpose: "CC",
+    },
+    {
+      label: "Josie Hartnell — no match anywhere",
+      hint: "Neither Equifax's payroll data nor the HMRC route produces a match for these details, so the case closes as FAILED and a corrected one has to be opened.",
+      outcome: "NO_RECORD",
+      firstName: "Josie", lastName: "Hartnell", dob: "1996-02-09", niNumber: "QQ123459C",
+      addressLine1: "22 Dean Street", postalCode: "NE1 1PG",
+      email: "josie.hartnell@example.com", mobile: "07700 900104",
+      customerReference: "ABC-1044", employerName: "",
+      verificationType: "VOE", identifyingPurpose: "ES",
+    },
+    {
+      label: "Ewan Blaylock — never completes the consent",
+      hint: "The link is sent and nothing happens. After 24 hours of five-minute checks the case closes as EXPIRED. It can be resumed by hand if the applicant turns up late.",
+      outcome: "EXPIRES", reportKind: "MIXED",
+      firstName: "Ewan", lastName: "Blaylock", dob: "1982-08-30", niNumber: "QQ123460C",
+      addressLine1: "31 Clayton Street", postalCode: "NE1 5PN",
+      email: "ewan.blaylock@example.com", mobile: "",
+      customerReference: "ABC-1045", employerName: "Brightwell Retail Ltd",
+      verificationType: "VOI", identifyingPurpose: "TS",
+    },
+  ];
 
   function simulateCreateOrder(payload) {
     return new Promise(resolve => {
@@ -983,7 +1091,10 @@
 
   function simulateGetResult(order) {
     return new Promise(resolve => {
-      setTimeout(() => resolve({ ...order, status: "DELIVERED", report: buildMockReport(order.payload) }), 1600);
+      setTimeout(() => resolve({
+        ...order, status: "DELIVERED",
+        report: buildMockReport(order.payload, order.reportKind),
+      }), 1600);
     });
   }
 
@@ -1206,14 +1317,17 @@
       verificationType: document.getElementById("verificationType").value,
       identifyingPurpose: document.getElementById("identifyingPurpose").value,
     };
-    const outcome = document.getElementById("demoOutcome").value;
+    const chosen = chosenApplicant();
+    const outcome = chosen.outcome;
 
     showFlowView(processingView);
 
     const created = await simulateCreateOrder(payload);
-    // Kept on the order so a commercial case resuming after review takes the
-    // same path it would have taken had it not been held.
+    // Both kept on the order so a commercial case resuming after review takes
+    // the same path, and returns the same report, it would have taken had it
+    // never been held.
     created.demoOutcome = outcome;
+    created.reportKind = chosen.reportKind;
     // The real API returns 201 with status PENDING, and the case is in the
     // client's list from that moment -- before Equifax has been called at all.
     // Adding it only once the outcome was known meant PENDING was a state no
@@ -1248,7 +1362,11 @@
 
     // The common case the demo used to hide: HMRC hands back a consent link
     // and nothing further happens until the applicant acts on it.
-    if (outcome === "CONSENT") {
+    //
+    // EXPIRES takes the same branch on purpose. From the broker's side the two
+    // are identical at this point -- you cannot tell in advance whether someone
+    // will complete it, which is exactly why the 24-hour window exists.
+    if (outcome === "CONSENT" || outcome === "EXPIRES") {
       currentOrder = {
         ...order,
         status: "AWAITING_CONSENT",
@@ -1267,6 +1385,32 @@
     showFlowView(resultView, "result-case-id", delivered);
   }
 
+  // ---------- The applicant picker ----------
+  const applicantSelect = document.getElementById("demoApplicant");
+  const APPLICANT_FIELDS = [
+    "firstName", "lastName", "dob", "niNumber", "addressLine1", "postalCode",
+    "email", "mobile", "customerReference", "employerName",
+    "verificationType", "identifyingPurpose",
+  ];
+
+  function chosenApplicant() {
+    return DEMO_APPLICANTS[applicantSelect.value] || DEMO_APPLICANTS[0];
+  }
+
+  function applyApplicant() {
+    const a = chosenApplicant();
+    document.getElementById("demoApplicantHint").textContent = a.hint;
+    APPLICANT_FIELDS.forEach(field => {
+      const el = document.getElementById(field);
+      if (el && a[field] !== undefined) el.value = a[field];
+    });
+  }
+
+  applicantSelect.innerHTML = DEMO_APPLICANTS
+    .map((a, i) => `<option value="${i}">${a.label}</option>`).join("");
+  applicantSelect.addEventListener("change", applyApplicant);
+  applyApplicant();
+
   function renderConsent(order) {
     const { payload } = order;
     const delivery = payload.mobile
@@ -1274,6 +1418,16 @@
       : "Emailed to " + payload.email + ".";
     document.getElementById("consent-delivery").textContent = delivery;
     document.getElementById("consent-url").textContent = order.consentUrl;
+
+    // Whether this applicant completes the consent is a fact about them, not a
+    // choice, so the button offers whichever thing they actually do. A broker
+    // cannot tell the two apart at this point either -- which is the reason the
+    // 24-hour window exists at all.
+    const expires = order.demoOutcome === "EXPIRES";
+    const btn = document.getElementById("consent-simulate-btn");
+    btn.textContent = expires
+      ? "Simulate the 24 hours elapsing"
+      : "Simulate the applicant consenting";
   }
 
   function renderPayrollEmployersHtml(report) {
@@ -1342,8 +1496,9 @@
     document.getElementById("r-address").textContent = payload.addressLine1 + ", " + payload.postalCode;
     document.getElementById("r-refnum").textContent = payload.customerReference || "-";
     document.getElementById("r-employer").textContent = payload.employerName || "-";
-    document.getElementById("r-retrieved-name").textContent = report.retrievedName;
-    document.getElementById("r-retrieved-address").textContent = report.retrievedAddress;
+    document.getElementById("r-retrieved-name").textContent = report.retrievedName || "-";
+    document.getElementById("r-retrieved-address").textContent = report.retrievedAddress || "-";
+    applyReportSections("r", report);
 
     document.getElementById("r-payroll-employers").innerHTML = renderPayrollEmployersHtml(report);
     document.getElementById("r-self-employment").innerHTML = renderSelfEmploymentHtml(report.selfEmployment);
@@ -1379,12 +1534,40 @@
     // twice on a case that has already moved on would be nonsense.
     if (!currentOrder || currentOrder.status !== "AWAITING_CONSENT") return;
 
+    // This applicant never completes it. 288 five-minute polls over 24 hours all
+    // come back "In progress", and the gateway closes the case. The wording is
+    // the gateway's own error_detail for giving up at the attempt limit.
+    if (currentOrder.demoOutcome === "EXPIRES") {
+      // Held in a local, because showView() deliberately clears currentOrder --
+      // navigating away is meant to abandon whatever case was mid-flow. Reading
+      // it back afterwards hands openCaseDetail a null.
+      const expired = {
+        ...currentOrder,
+        status: "EXPIRED",
+        errorDetail: "Polling gave up after max attempts",
+      };
+      currentOrder = expired;
+      updateCaseInPortal(expired);
+      showView("portal");
+      openCaseDetail(expired);
+      return;
+    }
+
     const polling = { ...currentOrder, status: "POLLING" };
     currentOrder = polling;
     updateCaseInPortal(polling);
     showFlowView(pollingView, "polling-case-id", polling);
 
-    const delivered = await simulateGetResult(polling);
+    // READY is a real step, not a flourish. The poll that sees HMRC has released
+    // the record sets READY and hands off to a second task, which is what
+    // actually fetches the report -- so a case genuinely sits at READY in
+    // between, and the polling screen already told the viewer it would.
+    await new Promise(r => setTimeout(r, 700));
+    const ready = { ...polling, status: "READY" };
+    currentOrder = ready;
+    updateCaseInPortal(ready);
+
+    const delivered = await simulateGetResult(ready);
     currentOrder = delivered;
     updateCaseInPortal(delivered);
     renderResult(delivered);
@@ -1393,8 +1576,8 @@
 
   // ---------- Client portal (ABC Ltd) ----------
   const APPLICANTS = [
-    "Test1 User", "Test2 User", "Test3 User", "Test4 User", "Test5 User",
-    "Test6 User", "Test7 User", "Test8 User",
+    "Harriet Vance", "Owen Bramley", "Priya Desai", "Callum Reid",
+    "Nadia Farouk", "Gregor Lindsay", "Isabel Moreno", "Tomas Novak",
   ];
   // Indices 0, 3 and 6 are overridden to COMMERCIAL/PENDING below, so the
   // spread a viewer actually sees is DELIVERED, AWAITING_CONSENT, FAILED and
@@ -1411,18 +1594,22 @@
   // Every state the gateway can put an order in appears here. DELIVERED appears
   // most often because that is what a working account mostly looks like. Only one
   // PENDING, because in the live service a case is in that state for seconds.
+  //
+  // `kind` is the report shape a DELIVERED case carries, so the list holds more
+  // than one. A client's account genuinely looks like this: mostly employed
+  // applicants, some self-employed with no employment section at all.
   const SEEDED_CASES = [
-    { category: "RESIDENTIAL", status: "DELIVERED" },
-    { category: "COMMERCIAL",  status: "DELIVERED" },
+    { category: "RESIDENTIAL", status: "DELIVERED", kind: "MIXED" },
+    { category: "COMMERCIAL",  status: "DELIVERED", kind: "PAYE_ONLY" },
     { category: "RESIDENTIAL", status: "AWAITING_CONSENT" },
-    { category: "RESIDENTIAL", status: "DELIVERED" },
+    { category: "RESIDENTIAL", status: "DELIVERED", kind: "SELF_EMPLOYED" },
     { category: "COMMERCIAL",  status: "POLLING" },
     { category: "RESIDENTIAL", status: "FAILED" },
-    { category: "COMMERCIAL",  status: "DELIVERED" },
+    { category: "COMMERCIAL",  status: "DELIVERED", kind: "PAYE_ONLY" },
     { category: "RESIDENTIAL", status: "READY" },
     { category: "RESIDENTIAL", status: "PENDING" },
     { category: "COMMERCIAL",  status: "EXPIRED" },
-    { category: "RESIDENTIAL", status: "DELIVERED" },
+    { category: "RESIDENTIAL", status: "DELIVERED", kind: "MIXED" },
     // Past the retention window, so the nightly sweep has already cleared it.
     // The case and its figures are still here; the applicant is not. Seeded
     // because this is the state a client is most likely to ask about and the
@@ -1551,7 +1738,8 @@
         payload,
         status,
         errorDetail: status === "FAILED" ? "No record found and no HMRC waterfall available" : "",
-        report: status === "DELIVERED" ? buildMockReport(payload) : null,
+        reportKind: seed.kind || "MIXED",
+        report: status === "DELIVERED" ? buildMockReport(payload, seed.kind) : null,
       };
       if (seed.purged) {
         const purgedOn = new Date(d);
@@ -1791,6 +1979,7 @@
 
     document.getElementById("pd-refnum").textContent = payload.customerReference || "-";
     document.getElementById("pd-employer").textContent = payload.employerName || "-";
+    applyReportSections("pd", report);
     document.getElementById("pd-download-btn").onclick = () => downloadReportPdf(order);
   }
 
