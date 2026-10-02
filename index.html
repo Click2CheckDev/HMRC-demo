@@ -580,6 +580,29 @@
     .portal-card { max-width: 100%; }
 
     .grid { grid-template-columns: 1fr; gap: 16px; margin-bottom: 26px; }
+    /* Without this the grid stays two columns. `grid-column: span 2` creates an
+       implicit second column even when the template defines one, so the
+       single-column rule above has no effect on its own -- which is why the
+       fields were still 213px wide and hanging off the card. */
+    .field.span2 { grid-column: span 1; }
+    .detail-cols { grid-template-columns: 1fr; }
+
+    /* The header was the other half. The logo column is a fixed 300px that will
+       not shrink, the title is 26px, and the welcome block is nowrap -- together
+       560px of content in a 390px bar, which is what made the page scroll
+       sideways rather than anything inside a card. */
+    .app-header { height: auto; min-height: 60px; }
+    .app-header .header-logo { width: auto; padding: 0 16px; }
+    .app-header .header-logo .logo-img { height: 24px; width: 96px; }
+    .app-header .header-logo .logo-sub { display: none; }
+    .app-header h1 {
+      font-size: 16px; padding-left: 0; padding-right: 10px;
+      min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    /* The client's name is already in the logo, so the greeting is the thing to
+       drop. The avatar stays as the account affordance. */
+    .app-header .welcome { padding-right: 14px; font-size: 0; gap: 0; }
+    .app-header .welcome svg { font-size: 14px; flex: none; }
     .stat-row { grid-template-columns: 1fr 1fr; gap: 10px; }
     .portal-header { flex-direction: column; align-items: flex-start; gap: 10px; }
     .detail-head { flex-direction: column; }

@@ -337,10 +337,18 @@ carries its own label in place of the hidden header row. A year-by-year income
 table does not stack into anything comparable — the columns have to stay side by
 side — so those scroll instead.
 
-Checked as far as it can be: the rules parse, sit in the right media query, and
-the markup the stacked layout depends on is emitted. **None of that proves it
-looks right** — jsdom does no layout, so the only real test is opening it on a
-phone.
+Checked in a real browser, not reasoned about. `measure_overflow.js` drives the
+installed Chrome at 320px and 390px, walks all seven views, and reports every
+element whose box extends past the viewport. Elements inside a horizontal scroller
+are excluded, because the report tables and the sidebar strip are *meant* to
+extend past it.
+
+That was worth building: two fixes had already been reasoned from the CSS and the
+overflow survived both. The measurement found the actual causes in a minute.
+
+The jsdom harness still checks what it can — that the rules parse, sit in the right
+media query, and that the markup the stacked layout depends on is emitted — but it
+does no layout, so it cannot see an overflow.
 
 ## Running it without the internet
 
