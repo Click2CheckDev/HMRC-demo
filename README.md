@@ -58,7 +58,7 @@ button is not offered at all.
 A case can be followed all the way through from the list: pending, submitted,
 consent, polling, ready, delivered report.
 
-### Five test applicants, not an outcome switch
+### Six test applicants, not an outcome switch
 
 The demo used to ask which outcome a case should take. That was its biggest
 remaining fiction: **nobody chooses.** What happens follows from what Payroll and
@@ -73,6 +73,8 @@ Picking one fills the form, and every field stays editable.
 | **Alan Pettifer** | An instant match in Payroll. No HMRC, no consent, report in one step, and this happens for 15–20% of applicants. |
 | **Dev Ramanathan** | Self-employed. Consent is still needed, and the report that comes back has **no employment section at all**. |
 | **Josie Hartnell** | No match at Payroll or HMRC. Closes as `FAILED`. Usually an NI number, date of birth or surname that does not match what is held. |
+| **Imran Chaudhary** | Commercial. A director paid in dividends rather than wages, so a payroll lookup finds nothing. Follows a **company link** of his own, and the report comes back with dividends and shareholdings instead of employment. |
+| **Rosalind Whitaker** | Residential **and** commercial. Employed and a director, so both apply: she receives **two links** and has to follow both. |
 
 An applicant who never gets round to it is not shown as a test identity: nothing
 Click2Check does changes that outcome, and the `EXPIRED` status is already in the
@@ -80,95 +82,117 @@ seeded case list for anyone who wants to see it.
 
 ### The report shows only what HMRC hold
 
-Three different report shapes, because three different people:
+Five different report shapes, because the report only ever carries what HMRC hold
+about that particular person:
 
 - **Employment only** — payroll records and tax totals. No self-employment or
   other-income sections, because there is nothing to put in them.
 - **Employment and a business** — the shape of the provider's own sample report,
-  which is where every figure in this demo comes from.
+  which is where the employment and self-assessment figures come from.
 - **Self-employed** — no employment section, and no *Retrieved Personal
   Information* section either. A sole trader has no employer record, and that
   record is the only thing HMRC enrich the name and address from.
+- **Commercial** — dividends and shareholdings, and no employment at all, because
+  a director paid in dividends has no payroll record to find.
+- **Residential and commercial** — employment, dividends and shareholdings
+  together.
 
 Empty sections are **absent, not blank**. A heading over an empty table reads as
 missing data; a section that is not there reads as not applicable, which is what
 it is. The live report does the same.
 
-### Consent, step by step
+### The applicant's journey, shown rather than described
 
-The applicant signs in with their **Government Gateway ID, password and the
-two-factor code** HMRC send them. Click2Check never sees any of it.
+There used to be an "Applicant consent required" card explaining this step to a
+broker in three bullet points. The step itself is more convincing, so the demo
+shows it: **the applicant's inbox**, with the email landing in it.
 
-There is **no address step**, which is worth saying because it is easy to assume
-otherwise: HMRC identify the person from the Government Gateway account itself.
-The address on the order form is used for the Payroll lookup, not for consent.
+The email is personalised, addressed to them by name, naming the client who asked
+and why in the applicant's own terms rather than the broker's regulatory label,
+and carrying their reference and the 24-hour limit. It arrives a moment after the
+inbox opens, unread, among mail that was already there, because that is the moment
+the whole journey depends on.
 
-Once they authorise it, the case moves `AWAITING CONSENT` → `POLLING` → `READY` →
+Worth showing because we ask for the link rather than having the data provider
+send it, so this is Click2Check's email in Click2Check's words. It is the first
+thing an applicant ever sees of us, and whether they act on it decides whether the
+case completes at all. The inbox also says the link was texted as well as emailed:
+reaching the applicant is the dependency.
+
+Pressing the link opens the page it goes to, **inside a browser frame with the
+address bar visible**, because "where does that link actually take them" is the
+question clients ask and the address answers it better than the page does.
+
+That page is styled as a government service and asks for the three things HMRC
+ask for: the Government Gateway user ID, the password, and the access code HMRC
+send. It states what approving actually shares, and that **no address is asked
+for** — HMRC identify the person from the account itself.
+
+It is deliberately **not a replica.** No crown, no GOV.UK wordmark, a simulation
+banner above it, and every field readonly with a placeholder value. A working copy
+of a government sign-in page asking for a user ID, password and access code is a
+phishing kit whatever it was built for, and this repository is public.
+Recognisable is the useful part; convincing is not. There are checks for the
+absence of those things, not only the presence of the right ones.
+
+Once authorised, the case moves `AWAITING CONSENT` → `POLLING` → `READY` →
 `DELIVERED` on its own. `READY` is brief but real: one background task sees that
-HMRC has released the record, and a second one fetches it.
+HMRC has released the record, and a second fetches it.
 
-**The applicant's journey is shown, not described.** *Preview the applicant's
-email* shows what they receive: addressed to them by name, naming the client who
-asked and why in their own terms rather than the broker's regulatory label,
-carrying their reference and the 24-hour limit. Pressing the button in the email
-opens the next step, which is what pressing it does.
+The broker's own need did not disappear with the card. The consent link, and a
+button to copy it, are on the case in the list — which is where a broker goes when
+an applicant says they never received it.
 
-That matters more than it looks. We ask for the consent link rather than having
-the provider send it, so this is Click2Check's email in Click2Check's words, and
-it is the first thing an applicant ever sees of us. Whether they act on it
-decides whether the case completes at all.
+### The commercial journey is a separate link
 
-The **consent link is usable**, not decoration. **Copy link** puts it on the
-clipboard, and says so — or says it could not, rather than claiming success and
-sending someone off to paste nothing. The same button is on an awaiting-consent
-case in the list, which is where a broker goes back to resend it.
+This is the part most worth understanding, and the newest.
 
-Clicking the link itself opens **what the applicant sees**: the three things HMRC
-ask for, and an *Authorise* button that carries the case on exactly as the
-broker-side button does. It is reachable from the keyboard as well as the mouse.
+A director typically takes income as **dividends rather than wages**, so a payroll
+lookup finds nothing at all. The company's records sit behind the **company's own
+Government Gateway account**, not the director's personal one. So it is a separate
+authorisation on a separate link, and the report comes back with different
+sections:
 
-That screen is deliberately **Click2Check's own styling with a simulation banner,
-not a reproduction of a Government Gateway sign-in page**, and every field is
-readonly with a placeholder value. A convincing fake of a government login asking
-for a user ID, password and access code is a phishing template whatever it was
-built for, and this repository is public. Naming the three fields makes the point;
-imitating the page does not.
+| | Residential | Commercial |
+|---|---|---|
+| Link | `/individual/…` | `/company/…` |
+| Signs in as | themselves | the organisation |
+| Report shows | employment, self-employment, other income | **dividends, shareholdings** |
 
-One deliberate asymmetry: *Authorise* always authorises, including for Ewan
-Blaylock. "Never completes the consent" describes what happens when nobody acts,
-and pressing the button is acting.
+Somebody who is **both** employed and a director gets **two links in one email**
+and has to follow both. The demo holds this: authorising one marks it done and
+returns them to the inbox for the other, and the case does not complete until both
+are in. That is the behaviour the separate link exists to represent, and it is the
+thing a client will plan around.
 
-### Residential and Commercial are the same thing
+### What Residential and Commercial do and do not share
 
-Worth stating plainly, because an earlier version of this demo said otherwise.
-`query_category` is a reporting label. It is **never sent to the provider**, nothing in
-the gateway branches on it, and a commercial case is processed exactly like a
-residential one. Its only jobs are filtering the case list and splitting the
-counts on the usage endpoint for billing.
+Two different things get called the same name here, and it is worth separating
+them.
 
-There is **no manual review**. An earlier version of this demo held commercial
-cases at "pending review" and never produced a report for them, which was
-invented rather than observed. It has been removed, and commercial cases now
-appear across the same statuses as residential ones.
+**`query_category` is a reporting label.** It is never sent to the data provider,
+nothing in the gateway branches on it, and its only jobs are filtering the case
+list and splitting the counts on the usage endpoint for billing. That has not
+changed.
 
-Both appear across the same statuses in the seeded case list, and the category
-filter above it shows how `?query_category=` narrows the real `GET /orders/`.
+**The commercial journey is genuinely different**, as above: its own link, the
+organisation's Government Gateway account, and dividends and shareholdings in
+place of employment. An earlier version of this demo said commercial and
+residential were the same in every respect. That was true of the label and wrong
+about the journey.
 
-**The instant match rate is 15&ndash;20%** (confirmed by the data provider on
-25 September 2026). So roughly **four cases in five reach the consent step**, which is why the
-demo defaults to it. Worth saying out loud when showing this: results are usually
-not instant, and the applicant has to be reachable and willing.
+There is still **no manual review**. An earlier version held commercial cases at
+"pending review" and never produced a report for them, which was invented rather
+than observed. Nothing at Click2Check sits between the applicant and their report.
 
-The data provider also confirmed the National Insurance number is **not mandatory
-on their side** — a request without one is accepted — but supplying it improves the chance
-of an instant match.
-
-The form requires it anyway, and that is **Click2Check's rule rather than
-the provider's**. The field says nothing beyond being required, which is the right
-amount: an earlier version of this demo claimed "No verification is possible
-without it", and that was simply untrue. If anyone asks on a call, the honest
-answer is that we always collect it because it saves chasing the applicant for
-consent, not because anything rejects an order without it.
+> **For whoever maintains this:** the commercial journey is **not implemented in
+> the HMRC gateway yet.** The gateway sends an individual's NI number, date of
+> birth, name and address, and has no company path. The data provider has not
+> documented one either — their onboarding document and sample report contain no
+> reference to organisation accounts, self-assessment or scope selection. The
+> journey shown here is C2C's product direction, specified on 2 October 2026, and
+> the dividend and shareholding figures are the only invented numbers in this
+> demo. Everything else comes from the provider's own sample.
 
 ### Data retention and deletion
 
@@ -253,7 +277,9 @@ real case can take rather than only the one that succeeds instantly. In October
 the outcome selector was replaced by a list of test applicants, and the retention
 section was added.
 
-Every figure in the report comes from the data provider's own sample report. Only the names
+Every figure in the report comes from the data provider's own sample report,
+except the dividends and shareholdings, which are invented because they gave us
+no commercial example. Only the names
 are substituted: applicants, employers and businesses are invented, the
 National Insurance numbers use the `QQ` prefix HMRC never issues, and the mobile
 numbers are in Ofcom's reserved drama range. None of it can belong to a real

@@ -351,6 +351,80 @@
   .email-cta:hover { opacity: 0.9; }
   .email-small { font-size: 12.5px; color: var(--muted); }
 
+  /* The applicant's inbox. A mail client, so the email is seen arriving rather
+     than described as having been sent. */
+  .mail-client { border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
+  .mail-toolbar {
+    background: var(--bg); border-bottom: 1px solid var(--border);
+    padding: 10px 14px; display: flex; justify-content: space-between;
+    align-items: center; font-size: 12.5px;
+  }
+  .mail-account { font-weight: 600; }
+  .mail-count { color: var(--muted); }
+  .mail-split { display: flex; min-height: 320px; }
+  .mail-list {
+    list-style: none; margin: 0; padding: 0; width: 38%; min-width: 220px;
+    border-right: 1px solid var(--border); overflow-y: auto;
+  }
+  .mail-list li {
+    padding: 12px 14px; border-bottom: 1px solid var(--border);
+    cursor: pointer; font-size: 13px; line-height: 1.45;
+  }
+  .mail-list li:hover { background: var(--bg); }
+  .mail-list li.selected { background: var(--bg); }
+  .mail-from { font-weight: 600; }
+  .mail-subject { color: var(--muted); }
+  .mail-list li.unread .mail-from,
+  .mail-list li.unread .mail-subject { color: var(--brand-ink); font-weight: 600; }
+  .mail-new {
+    display: inline-block; background: var(--brand); color: #fff;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.04em;
+    padding: 1px 6px; border-radius: 3px; margin-left: 6px; vertical-align: 1px;
+  }
+  .mail-when { float: right; color: var(--muted); font-size: 11.5px; font-weight: 400; }
+  .mail-reader { flex: 1; overflow-y: auto; }
+  .mail-empty { padding: 28px 18px; color: var(--muted); font-size: 13px; }
+
+  /* A browser frame, because "where does the link take them" is answered by the
+     address bar rather than by the page inside it. */
+  .browser-frame { border: 1px solid var(--border-strong); border-radius: 6px; overflow: hidden; }
+  .browser-bar {
+    background: #e9eaec; border-bottom: 1px solid var(--border-strong);
+    padding: 8px 12px; display: flex; align-items: center; gap: 12px;
+  }
+  .browser-dots { display: flex; gap: 6px; }
+  .browser-dots i { width: 10px; height: 10px; border-radius: 50%; background: #c4c6ca; }
+  .browser-address {
+    flex: 1; background: #fff; border: 1px solid #d3d5d9; border-radius: 20px;
+    padding: 5px 12px; font-size: 12px; display: flex; align-items: center; gap: 7px;
+    color: #3a3d42; overflow: hidden; white-space: nowrap;
+  }
+  .browser-lock { font-size: 10px; }
+
+  /* Recognisable as a government service without being a copy of one. */
+  .gov-page { background: #fff; }
+  .gov-header {
+    background: #0b0c0c; color: #fff; padding: 13px 20px;
+    display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+  }
+  .gov-mark { font-weight: 700; font-size: 15px; letter-spacing: -0.01em; }
+  .gov-service { font-size: 14px; color: #c9cbcd; }
+  .gov-body { padding: 26px 20px 30px; max-width: 520px; }
+  .gov-h1 { font-size: 22px; margin: 0 0 10px; font-weight: 700; color: #0b0c0c; }
+  .gov-lede { font-size: 14px; color: #3a3d42; margin: 0 0 20px; line-height: 1.55; }
+  .gov-field { margin-bottom: 16px; }
+  .gov-field label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; color: #0b0c0c; }
+  .gov-field input {
+    width: 100%; max-width: 320px; padding: 8px 10px; font-size: 14px;
+    border: 2px solid #0b0c0c; border-radius: 0; background: #f3f4f5;
+    color: #6a6d72; cursor: not-allowed; font-family: inherit;
+  }
+  .gov-hint { display: block; font-size: 12.5px; color: #6a6d72; margin-top: 5px; }
+  .gov-note {
+    border-left: 4px solid #0b0c0c; padding: 4px 0 4px 14px;
+    font-size: 13.5px; color: #3a3d42; margin: 22px 0 0;
+  }
+
   .note-box {
     border-left: 3px solid var(--border-strong); padding: 2px 0 2px 14px;
     font-size: 13.5px; line-height: 1.6; color: var(--muted); margin: 0 0 26px;
@@ -540,118 +614,124 @@
     <p class="subtitle" style="margin:14px auto 0; text-align:center;">Matching applicant details against payroll data. This usually takes a few seconds.</p>
   </div>
 
-  <!-- STEP 2c: CONSENT REQUIRED -->
-  <!-- The path the demo used to skip entirely. HMRC releases nothing without
-       the applicant's own authorisation unless there is an instant payroll
-       match, so for many cases this screen, not the report, is what happens
-       next. -->
-  <div id="consent-view" class="card hidden">
-    <div class="eyebrow muted" id="consent-case-id"></div>
-    <h1 class="title">Applicant consent required</h1>
-    <p class="subtitle"><strong>Payroll</strong> does not hold this person, so the request has been forwarded to HMRC. The applicant is identified through the Government Gateway instead, which needs their authorisation.</p>
+  <!-- STEP 2c: THE APPLICANT'S INBOX
+       This replaces the old "Applicant consent required" card, which explained
+       the step to a broker in three bullet points. The step itself is more
+       convincing than a description of it, and the broker-facing part of it --
+       the link, and a way to copy it -- already lives on the case in the list,
+       which is where a broker actually goes.
 
-    <ol class="steps">
-      <li><strong>We send the applicant a consent link.</strong> <span id="consent-delivery"></span></li>
-      <li><strong>They sign in with their Government Gateway details</strong> on the verification page: Gateway ID, password, and the two-factor code HMRC sends them. Click2Check never sees any of it, and there is no address step &mdash; HMRC identify the person from the account itself.</li>
-      <li><strong>They approve the request.</strong> HMRC releases the payroll record and the case continues on its own &mdash; nobody has to come back and chase it.</li>
-    </ol>
+       The email matters because we ask for the link rather than having the
+       provider send it, so it is Click2Check's email in Click2Check's words. It
+       is the first thing an applicant ever sees of us, and whether they act on
+       it decides whether the case completes at all. -->
+  <div id="inbox-view" class="card wide hidden">
+    <div class="sim-banner">Simulation &mdash; the applicant's inbox, so the journey can be shown from their side. No email is sent.</div>
 
-    <div class="link-box">
-      <div class="link-box-label">Consent link</div>
-      <code id="consent-url" class="link-clickable" role="button" tabindex="0"
-            title="Open what the applicant sees"></code>
-      <div class="link-actions">
-        <button type="button" class="btn-secondary btn-small" id="consent-copy-btn">Copy link</button>
-        <button type="button" class="btn-secondary btn-small" id="consent-email-btn">Preview the applicant's email</button>
-        <button type="button" class="btn-secondary btn-small" id="consent-open-btn">Open as the applicant</button>
-        <span class="muted" id="consent-copy-note"></span>
+    <div class="eyebrow muted" id="inbox-case-id"></div>
+    <h1 class="title">The applicant receives an email</h1>
+    <p class="subtitle" id="inbox-subtitle"></p>
+
+    <div class="mail-client">
+      <div class="mail-toolbar">
+        <span class="mail-account" id="inbox-account"></span>
+        <span class="mail-count" id="inbox-delivery"></span>
+        <span class="mail-count" id="inbox-unread"></span>
       </div>
-    </div>
+      <div class="mail-split">
+        <ul class="mail-list" id="inbox-list"></ul>
+        <div class="mail-reader" id="inbox-reader">
+          <p class="mail-empty" id="inbox-empty">Select the message to open it.</p>
 
-    <p class="note-box">Until then the case sits at <span class="status-pill awaiting_consent">AWAITING CONSENT</span>. If the applicant has not consented within 24 hours it is closed as <span class="status-pill expired">EXPIRED</span> and a fresh case has to be opened.</p>
+          <div id="inbox-message" class="hidden">
+            <div class="email-head">
+              <div><span class="k">From</span> Click2Check &lt;noreply@click2check.example&gt;</div>
+              <div><span class="k">To</span> <span id="email-to"></span></div>
+              <div><span class="k">Subject</span> <strong id="email-subject"></strong></div>
+            </div>
+            <div class="email-body">
+              <p id="email-greeting"></p>
+              <p id="email-intro"></p>
 
-    <div class="actions">
-      <button class="btn-primary" id="consent-simulate-btn">Simulate the applicant consenting</button>
-      <button class="btn-secondary" id="consent-cases-btn">Leave it pending</button>
-    </div>
-    <p class="demo-note">That first button stands in for something the applicant does on GOV.UK in their own time &mdash; minutes or hours after the case is opened, not seconds.</p>
-  </div>
+              <div id="email-links"></div>
 
-  <!-- STEP 2c-i: THE EMAIL THE APPLICANT RECEIVES
-       We ask for the consent link rather than having it sent for us
-       (isExternalCommunicationHandledByVerifier), so this is our email, in our
-       words. Which means it is worth showing: it is the first thing the
-       applicant ever sees of Click2Check, and whether they act on it decides
-       whether the case completes at all. -->
-  <div id="email-view" class="card hidden">
-    <div class="sim-banner">Simulation &mdash; a preview of the email the applicant receives. Nothing is sent.</div>
-
-    <div class="eyebrow muted" id="email-case-id"></div>
-    <h1 class="title">What the applicant receives</h1>
-    <p class="subtitle">Personalised, and sent by us rather than by the data provider, so the applicant recognises who is asking and why.</p>
-
-    <div class="email-frame">
-      <div class="email-head">
-        <div><span class="k">From</span> Click2Check &lt;noreply@click2check.example&gt;</div>
-        <div><span class="k">To</span> <span id="email-to"></span></div>
-        <div><span class="k">Subject</span> <strong id="email-subject"></strong></div>
-      </div>
-      <div class="email-body">
-        <p id="email-greeting"></p>
-        <p id="email-intro"></p>
-        <p><button type="button" class="email-cta" id="email-link-btn">Confirm your income with HMRC</button></p>
-        <p>You will sign in with your own Government Gateway details and approve the request. HMRC then send the figures to us directly. <strong>We never see your sign-in details.</strong></p>
-        <p class="email-small">This link expires in 24 hours. If you were not expecting this, you can ignore it &mdash; nothing is shared unless you approve it.</p>
-        <p class="email-small">Your reference: <span class="mono" id="email-reference"></span></p>
+              <p>You will sign in with your own Government Gateway details and approve the request. HMRC then send the figures to us directly. <strong>We never see your sign-in details.</strong></p>
+              <p class="email-small">These links expire in 24 hours. If you were not expecting this, you can ignore it &mdash; nothing is shared unless you approve it.</p>
+              <p class="email-small">Your reference: <span class="mono" id="email-reference"></span></p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
     <div class="actions">
-      <button class="btn-secondary" id="email-back-btn">Back to the case</button>
+      <button class="btn-secondary" id="inbox-cases-btn">Back to the case list</button>
     </div>
-    <p class="demo-note">Pressing the button in the email is what the applicant does next, in their own time. It opens the page in the following step.</p>
+    <p class="demo-note">The applicant does this in their own time &mdash; minutes or hours after the case is opened, not seconds. Until they do, the case sits at <span class="status-pill awaiting_consent">AWAITING CONSENT</span>, and is closed as <span class="status-pill expired">EXPIRED</span> if 24 hours pass.</p>
   </div>
 
-  <!-- STEP 2c-ii: WHAT THE APPLICANT SEES
-       Reached by opening the consent link. The demo described this page in words
-       and never showed it, which is the step four cases in five depend on.
+  <!-- STEP 2c-ii: THE GOVERNMENT GATEWAY SIGN-IN
+       Shown inside a browser frame with the address bar visible, because the
+       question a client asks is "where does that link actually take them" and the
+       address answers it better than the page does.
 
-       Deliberately NOT a reproduction of a Government Gateway sign-in screen.
-       It carries Click2Check's own styling and a simulation banner, and every
-       input is readonly with an obvious placeholder value, so it cannot collect
-       a credential from anyone even by accident. Naming the three things HMRC
-       ask for is the informative part; imitating their page is not, and this
-       demo is published publicly. -->
-  <div id="applicant-view" class="card hidden">
-    <div class="sim-banner">Simulation &mdash; this is an illustration of the applicant's side, not a real sign-in page. Nothing here is submitted anywhere.</div>
+       Styled as a government service -- dark header bar, service name, the layout
+       GOV.UK pages use -- so it is recognisable as somewhere official. It is
+       deliberately NOT a copy: no crown, no GOV.UK wordmark, a simulation banner
+       above it, and every field readonly with a placeholder value. A working
+       replica of a government sign-in page asking for a user ID, password and
+       access code is a phishing kit whatever it was built for, and this
+       repository is public. Recognisable is the useful part; convincing is not. -->
+  <div id="applicant-view" class="card wide hidden">
+    <div class="sim-banner">Simulation &mdash; an illustration of the page the link opens. Not a real sign-in page, and nothing here is submitted.</div>
 
     <div class="eyebrow muted" id="applicant-case-id"></div>
-    <h1 class="title">What the applicant sees</h1>
-    <p class="subtitle">Opening the consent link takes the applicant to the verification page, where HMRC identify them through their own Government Gateway account. Click2Check never sees any of these details.</p>
+    <h1 class="title" id="applicant-title"></h1>
+    <p class="subtitle" id="applicant-subtitle"></p>
 
-    <div class="grid">
-      <div class="field readonly-field">
-        <label>Government Gateway user ID</label>
-        <input value="example-user-id" readonly autocomplete="off" tabindex="-1" />
+    <div class="browser-frame">
+      <div class="browser-bar">
+        <span class="browser-dots"><i></i><i></i><i></i></span>
+        <span class="browser-address">
+          <span class="browser-lock">&#128274;</span>
+          <span class="mono" id="applicant-address"></span>
+        </span>
       </div>
-      <div class="field readonly-field">
-        <label>Password</label>
-        <input value="not a real password" readonly autocomplete="off" tabindex="-1" />
-      </div>
-      <div class="field readonly-field">
-        <label>Access code</label>
-        <input value="000000" readonly autocomplete="off" tabindex="-1" />
-        <span class="field-hint">Sent to the applicant by HMRC. Two-factor authentication is required on their side, not ours.</span>
+
+      <div class="gov-page">
+        <div class="gov-header">
+          <span class="gov-mark">HM Government</span>
+          <span class="gov-service">Government Gateway</span>
+        </div>
+
+        <div class="gov-body">
+          <h2 class="gov-h1" id="gov-heading"></h2>
+          <p class="gov-lede" id="gov-lede"></p>
+
+          <div class="gov-field">
+            <label id="gov-id-label"></label>
+            <input value="example-user-id" readonly autocomplete="off" tabindex="-1" />
+          </div>
+          <div class="gov-field">
+            <label>Password</label>
+            <input value="not a real password" readonly autocomplete="off" tabindex="-1" />
+          </div>
+          <div class="gov-field">
+            <label>Access code</label>
+            <input value="000000" readonly autocomplete="off" tabindex="-1" />
+            <span class="gov-hint">Sent to the applicant by HMRC. Two-factor authentication is required on their side, not ours.</span>
+          </div>
+
+          <p class="gov-note" id="gov-scope"></p>
+        </div>
       </div>
     </div>
 
     <p class="note-box"><strong>No address is asked for.</strong> Worth knowing, because it is easy to assume otherwise: HMRC identify the person from the Government Gateway account itself. The address on the order form is used for the <strong>Payroll</strong> lookup, not for this step.</p>
 
-    <p class="note-box">Whichever of these the applicant does, they do it in their own time &mdash; minutes or hours after the case is opened, not seconds. The broker does not wait on this screen.</p>
-
     <div class="actions">
       <button class="btn-primary" id="applicant-authorise-btn">Authorise the data share</button>
-      <button class="btn-secondary" id="applicant-back-btn">Back without authorising</button>
+      <button class="btn-secondary" id="applicant-back-btn">Back to the inbox</button>
     </div>
   </div>
 
@@ -724,6 +804,16 @@
     <div class="section" id="r-sec-other-income">
       <h2>Other Sources of Income</h2>
       <div id="r-other-income"></div>
+    </div>
+
+    <div class="section" id="r-sec-dividends">
+      <h2>Dividends</h2>
+      <div id="r-dividends"></div>
+    </div>
+
+    <div class="section" id="r-sec-shares">
+      <h2>Shareholdings</h2>
+      <div id="r-shareholdings"></div>
     </div>
 
     <div class="section" id="r-sec-taxes">
@@ -897,6 +987,16 @@
     <div class="section" id="pd-sec-other-income">
       <h2>Other Sources of Income</h2>
       <div id="pd-other-income"></div>
+    </div>
+
+    <div class="section" id="pd-sec-dividends">
+      <h2>Dividends</h2>
+      <div id="pd-dividends"></div>
+    </div>
+
+    <div class="section" id="pd-sec-shares">
+      <h2>Shareholdings</h2>
+      <div id="pd-shareholdings"></div>
     </div>
 
     <div class="section" id="pd-sec-taxes">
@@ -1073,6 +1173,21 @@
     { year: "2020-21", statePension: 1427.89, otherPensionable: 1898.23, otherIncome: 5365.00 },
   ];
 
+  // Company-side figures. UNLIKE every other number in this file, these are
+  // invented: the data provider's sample report covers employment and
+  // self-assessment only, and they have given us nothing for the commercial
+  // journey. Shaped the way a director's return reads, and labelled as
+  // illustrative in the README so nobody mistakes them for observed data.
+  const FIXED_DIVIDENDS = [
+    { year: "2024-25", company: "Northgate Logistics Ltd", declared: 24000.00, taxPaid: 2025.00 },
+    { year: "2023-24", company: "Northgate Logistics Ltd", declared: 18000.00, taxPaid: 1350.00 },
+  ];
+
+  const FIXED_SHAREHOLDINGS = [
+    { company: "Northgate Logistics Ltd", companyNumber: "09876543", shareClass: "Ordinary", held: 60, since: "12-04-2019" },
+    { company: "Quayside Joinery Ltd", companyNumber: "11223344", shareClass: "Ordinary", held: 25, since: "03-09-2022" },
+  ];
+
   const FIXED_TAXES_PAID = [
     { year: "2022-23", totalTax: 7525.80, totalNI: 6772.28 },
     { year: "2021-22", totalTax: 6589.56, totalNI: 5321.64 },
@@ -1110,6 +1225,20 @@
       employers: [], selfEmployment: FIXED_SELF_EMPLOYMENT,
       otherIncome: FIXED_OTHER_INCOME, taxesPaid: FIXED_TAXES_PAID, retrieved: false,
     },
+    // A director taking income from their own company. No payroll, because the
+    // money arrives as dividends rather than wages, which is the whole reason
+    // the commercial journey exists: a payroll lookup finds nothing.
+    COMMERCIAL: {
+      employers: [], selfEmployment: [], otherIncome: [],
+      taxesPaid: FIXED_TAXES_PAID, retrieved: false,
+      dividends: FIXED_DIVIDENDS, shareholdings: FIXED_SHAREHOLDINGS,
+    },
+    // Employed and a director. Both journeys, so both sets of figures.
+    RESIDENTIAL_AND_COMMERCIAL: {
+      employers: FIXED_EMPLOYERS, selfEmployment: [],
+      otherIncome: FIXED_OTHER_INCOME, taxesPaid: FIXED_TAXES_PAID, retrieved: true,
+      dividends: FIXED_DIVIDENDS, shareholdings: FIXED_SHAREHOLDINGS,
+    },
   };
 
   function buildMockReport(payload, kind) {
@@ -1119,6 +1248,8 @@
       selfEmployment: shape.selfEmployment,
       otherIncome: shape.otherIncome,
       taxesPaid: shape.taxesPaid,
+      dividends: shape.dividends || [],
+      shareholdings: shape.shareholdings || [],
       retrievedName: shape.retrieved ? payload.firstName + " L " + payload.lastName : null,
       retrievedAddress: shape.retrieved
         ? "Apartment " + payload.addressLine1 + ", " + payload.postalCode : null,
@@ -1135,6 +1266,8 @@
       "sec-payroll": report.employers.length > 0,
       "sec-self-employment": report.selfEmployment.length > 0,
       "sec-other-income": report.otherIncome.length > 0,
+      "sec-dividends": (report.dividends || []).length > 0,
+      "sec-shares": (report.shareholdings || []).length > 0,
       "sec-taxes": report.taxesPaid.length > 0,
     };
     Object.entries(visible).forEach(([sec, on]) => {
@@ -1154,6 +1287,7 @@
       label: "Marcy Okonjo — PAYE, needs HMRC consent",
       hint: "Payroll does not hold this person, so the request goes to HMRC and waits on the applicant. Around four cases in five look like this.",
       outcome: "CONSENT", reportKind: "MIXED",
+      journey: "RESIDENTIAL",
       firstName: "Marcy", lastName: "Okonjo", dob: "1985-03-14", niNumber: "QQ123456C",
       addressLine1: "12 Quayside", postalCode: "NE1 1AQ",
       email: "marcy.okonjo@example.com", mobile: "07700 900102",
@@ -1164,6 +1298,7 @@
       label: "Alan Pettifer — instant match in Payroll",
       hint: "Found without involving HMRC at all, so the report comes back in one step and the applicant does nothing. This happens for 15-20% of applicants.",
       outcome: "INSTANT", reportKind: "PAYE_ONLY",
+      journey: "RESIDENTIAL",
       firstName: "Alan", lastName: "Pettifer", dob: "1979-11-02", niNumber: "QQ123457C",
       addressLine1: "4 Grainger Street", postalCode: "NE1 5JQ",
       email: "alan.pettifer@example.com", mobile: "07700 900101",
@@ -1174,6 +1309,7 @@
       label: "Dev Ramanathan — self-employed, no employer",
       hint: "Consent is still needed. The report that comes back has no employment section at all: a sole trader's income sits in HMRC's annual summaries instead, and there is no employer record for HMRC to have enriched the name and address from.",
       outcome: "CONSENT", reportKind: "SELF_EMPLOYED",
+      journey: "RESIDENTIAL",
       firstName: "Dev", lastName: "Ramanathan", dob: "1990-06-21", niNumber: "QQ123458C",
       addressLine1: "9 Pilgrim Street", postalCode: "NE1 6QE",
       email: "dev.ramanathan@example.com", mobile: "07700 900103",
@@ -1184,11 +1320,34 @@
       label: "Josie Hartnell — no match anywhere",
       hint: "Neither Payroll nor the HMRC route produces a match for these details, so the case closes as FAILED and a corrected one has to be opened.",
       outcome: "NO_RECORD",
+      journey: "RESIDENTIAL",
       firstName: "Josie", lastName: "Hartnell", dob: "1996-02-09", niNumber: "QQ123459C",
       addressLine1: "22 Dean Street", postalCode: "NE1 1PG",
       email: "josie.hartnell@example.com", mobile: "07700 900104",
       customerReference: "ABC-1044", employerName: "",
       verificationType: "VOE", identifyingPurpose: "ES",
+    },
+    {
+      label: "Imran Chaudhary — commercial, director of his own company",
+      hint: "Takes his income as dividends rather than wages, so a payroll lookup finds nothing. He follows a separate company link, and the report comes back with dividends and shareholdings instead of employment.",
+      outcome: "CONSENT", reportKind: "COMMERCIAL",
+      journey: "COMMERCIAL",
+      firstName: "Imran", lastName: "Chaudhary", dob: "1977-05-19", niNumber: "QQ123461C",
+      addressLine1: "8 Westgate Road", postalCode: "NE1 4SG",
+      email: "imran.chaudhary@example.com", mobile: "07700 900105",
+      customerReference: "ABC-1046", employerName: "Northgate Logistics Ltd",
+      queryCategory: "COMMERCIAL", verificationType: "VOI", identifyingPurpose: "MO",
+    },
+    {
+      label: "Rosalind Whitaker — residential and commercial",
+      hint: "Employed and a director, so both journeys apply. She receives two links and has to follow both: the personal one and the company one. The report carries employment, dividends and shareholdings together.",
+      outcome: "CONSENT", reportKind: "RESIDENTIAL_AND_COMMERCIAL",
+      journey: "BOTH",
+      firstName: "Rosalind", lastName: "Whitaker", dob: "1988-12-03", niNumber: "QQ123462C",
+      addressLine1: "47 Grey Street", postalCode: "NE1 6EE",
+      email: "rosalind.whitaker@example.com", mobile: "07700 900106",
+      customerReference: "ABC-1047", employerName: "Brightwell Retail Ltd",
+      queryCategory: "COMMERCIAL", verificationType: "VOI", identifyingPurpose: "MO",
     },
   ];
 
@@ -1207,9 +1366,39 @@
   // cannot be mistaken for a real consent link if the screen is photographed.
   // The real one comes back from the provider as
   // additionalVerificationDetails.externalVerificationUrlForVerificationSubject.
-  function mockConsentUrl(order) {
-    return "https://verify.click2check.example/consent/" + order.transactionNumber;
+  function mockConsentUrl(order, leg) {
+    const path = leg === "COMMERCIAL" ? "company" : "individual";
+    return "https://verify.click2check.example/" + path + "/" + order.transactionNumber;
   }
+
+  // Which authorisations a journey needs before the case can move on.
+  function legsFor(order) {
+    const journey = order.journey || "RESIDENTIAL";
+    if (journey === "COMMERCIAL") return ["COMMERCIAL"];
+    if (journey === "BOTH") return ["RESIDENTIAL", "COMMERCIAL"];
+    return ["RESIDENTIAL"];
+  }
+
+  const LEG_COPY = {
+    RESIDENTIAL: {
+      cta: "Confirm your income with HMRC",
+      title: "The personal link",
+      heading: "Sign in to your Government Gateway account",
+      lede: "HMRC need to know it is you before releasing your employment and income record.",
+      idLabel: "Government Gateway user ID",
+      scope: "Approving this lets HMRC share your employment, income and tax records with Click2Check. It does not give access to anything else.",
+      subtitle: "The personal consent. HMRC identify the applicant from their own Government Gateway account.",
+    },
+    COMMERCIAL: {
+      cta: "Confirm your company income with HMRC",
+      title: "The company link",
+      heading: "Sign in to your organisation's Government Gateway account",
+      lede: "A company's records sit behind its own Government Gateway account, not the director's personal one. That is why this is a separate link.",
+      idLabel: "Organisation Government Gateway user ID",
+      scope: "Approving this lets HMRC share the company's dividends, shareholdings and tax records with Click2Check.",
+      subtitle: "The company consent, on its own link. A director's income arrives as dividends rather than wages, so a payroll lookup finds nothing.",
+    },
+  };
 
   function simulateGetResult(order) {
     return new Promise(resolve => {
@@ -1397,16 +1586,15 @@
   // ---------- Flow wiring ----------
   const formView = document.getElementById("order-form");
   const processingView = document.getElementById("processing-view");
-  const consentView = document.getElementById("consent-view");
   const pollingView = document.getElementById("polling-view");
   const failedView = document.getElementById("failed-view");
   const resultView = document.getElementById("result-view");
 
   // One list, used by both the flow steps and the nav, so a new step can never
   // be left visible underneath another one.
-  const emailView = document.getElementById("email-view");
+  const inboxView = document.getElementById("inbox-view");
   const applicantView = document.getElementById("applicant-view");
-  const FLOW_VIEWS = [formView, processingView, consentView, emailView, applicantView,
+  const FLOW_VIEWS = [formView, processingView, inboxView, applicantView,
                       pollingView, failedView, resultView];
 
   function hideFlowViews() {
@@ -1453,6 +1641,7 @@
     // never been held.
     created.demoOutcome = outcome;
     created.reportKind = chosen.reportKind;
+    created.journey = chosen.journey || "RESIDENTIAL";
     // The real API returns 201 with status PENDING, and the case is in the
     // client's list from that moment -- before the provider has been called at all.
     // Adding it only once the outcome was known meant PENDING was a state no
@@ -1488,14 +1677,18 @@
     // The common case the demo used to hide: HMRC hands back a consent link
     // and nothing further happens until the applicant acts on it.
     if (outcome === "CONSENT") {
+      // One link per journey. A director's company consent is a separate
+      // authorisation on a separate link, so somebody who is both employed and a
+      // director receives two and has to follow both.
       currentOrder = {
         ...order,
         status: "AWAITING_CONSENT",
-        consentUrl: mockConsentUrl(order),
+        consentUrl: mockConsentUrl(order, "RESIDENTIAL"),
+        companyConsentUrl: mockConsentUrl(order, "COMMERCIAL"),
+        authorised: [],
       };
       updateCaseInPortal(currentOrder);
-      renderConsent(currentOrder);
-      showFlowView(consentView, "consent-case-id", currentOrder);
+      openInbox(currentOrder);
       return;
     }
 
@@ -1511,7 +1704,7 @@
   const APPLICANT_FIELDS = [
     "firstName", "lastName", "dob", "niNumber", "addressLine1", "postalCode",
     "email", "mobile", "customerReference", "employerName",
-    "verificationType", "identifyingPurpose",
+    "queryCategory", "verificationType", "identifyingPurpose",
   ];
 
   function chosenApplicant() {
@@ -1532,15 +1725,112 @@
   applicantSelect.addEventListener("change", applyApplicant);
   applyApplicant();
 
-  function renderConsent(order) {
-    const { payload } = order;
-    const delivery = payload.mobile
-      ? "Emailed to " + payload.email + " and texted to " + payload.mobile + "."
-      : "Emailed to " + payload.email + ".";
-    document.getElementById("consent-delivery").textContent = delivery;
-    document.getElementById("consent-url").textContent = order.consentUrl;
+  // Mail that was already there, so the one that matters is seen arriving rather
+  // than sitting alone in an empty inbox.
+  const INBOX_DECOYS = [
+    { from: "ABC Ltd", subject: "Your application reference", when: "09:12" },
+    { from: "Royal Mail", subject: "Delivery scheduled for today", when: "08:40" },
+    { from: "Northern Power", subject: "Your bill is ready", when: "Yesterday" },
+  ];
 
-    document.getElementById("consent-copy-note").textContent = "";
+  let inboxOrder = null;
+  let inboxTimer = null;
+
+  function renderInboxList(order, arrived) {
+    const list = document.getElementById("inbox-list");
+    const ours = arrived ? [{
+      from: "Click2Check", subject: document.getElementById("email-subject").textContent,
+      when: "now", ours: true,
+    }] : [];
+
+    list.innerHTML = [...ours, ...INBOX_DECOYS].map((m, i) => `
+      <li data-ours="${m.ours ? "1" : "0"}" class="${m.ours ? "unread" : ""}">
+        <span class="mail-when">${m.when}</span>
+        <div class="mail-from">${m.from}${m.ours ? '<span class="mail-new">NEW</span>' : ""}</div>
+        <div class="mail-subject">${m.subject}</div>
+      </li>
+    `).join("");
+
+    document.getElementById("inbox-unread").textContent =
+      arrived ? "1 unread" : "waiting for mail…";
+
+    list.querySelectorAll("li").forEach(li => {
+      li.addEventListener("click", () => {
+        if (li.dataset.ours !== "1") return;   // the decoys are scenery
+        list.querySelectorAll("li").forEach(x => x.classList.remove("selected", "unread"));
+        li.classList.add("selected");
+        document.getElementById("inbox-empty").classList.add("hidden");
+        document.getElementById("inbox-message").classList.remove("hidden");
+        document.getElementById("inbox-unread").textContent = "";
+      });
+    });
+  }
+
+  function renderEmailBody(order) {
+    const { payload } = order;
+    document.getElementById("email-to").textContent =
+      payload.firstName + " " + payload.lastName + " <" + payload.email + ">";
+    document.getElementById("email-subject").textContent =
+      "Confirm your income for your application with " + CLIENT_NAME;
+    document.getElementById("email-greeting").textContent = "Dear " + payload.firstName + ",";
+
+    const legs = legsFor(order);
+    const both = legs.length > 1;
+    document.getElementById("email-intro").textContent =
+      CLIENT_NAME + " has asked us to confirm your income as part of your "
+      + PURPOSE_PHRASES[payload.identifyingPurpose] + ". HMRC can share that with us "
+      + "directly, but only with your permission."
+      + (both ? " There are two parts to confirm: your own income, and your company's." : "");
+
+    // One button per leg, each marked once it has been authorised, so an
+    // applicant who is both employed and a director can see what is left to do.
+    document.getElementById("email-links").innerHTML = legs.map(leg => {
+      const done = (order.authorised || []).includes(leg);
+      return `<p><button type="button" class="email-cta" data-leg="${leg}"${done ? " disabled" : ""}>`
+        + (done ? "✓ " + LEG_COPY[leg].cta + " — done" : LEG_COPY[leg].cta)
+        + "</button></p>";
+    }).join("");
+
+    document.getElementById("email-links").querySelectorAll("button").forEach(b => {
+      b.addEventListener("click", () => openApplicantView(b.dataset.leg));
+    });
+
+    document.getElementById("email-reference").textContent =
+      payload.customerReference || order.transactionNumber.slice(0, 12);
+  }
+
+  function openInbox(order, keepOpen) {
+    inboxOrder = order;
+    renderEmailBody(order);
+
+    const legs = legsFor(order);
+    document.getElementById("inbox-account").textContent = order.payload.email;
+    // Both channels, because reaching the applicant is the whole dependency and a
+    // text is often what actually gets read.
+    document.getElementById("inbox-delivery").textContent = order.payload.mobile
+      ? "also texted to " + order.payload.mobile
+      : "no mobile on file";
+    document.getElementById("inbox-subtitle").textContent = legs.length > 1
+      ? "Two links, because a company's records sit behind its own Government Gateway account. Both have to be followed."
+      : LEG_COPY[legs[0]].subtitle;
+
+    const reopening = !!keepOpen;
+    document.getElementById("inbox-empty").classList.toggle("hidden", reopening);
+    document.getElementById("inbox-message").classList.toggle("hidden", !reopening);
+
+    renderInboxList(order, reopening);
+    showFlowView(inboxView, "inbox-case-id", order);
+
+    if (reopening) return;
+
+    // Landing, rather than already landed. A client watching this should see the
+    // thing arrive, because that is the moment the journey depends on.
+    clearTimeout(inboxTimer);
+    inboxTimer = setTimeout(() => {
+      if (inboxOrder === order && !inboxView.classList.contains("hidden")) {
+        renderInboxList(order, true);
+      }
+    }, 700);
   }
 
   function renderPayrollEmployersHtml(report) {
@@ -1598,6 +1888,28 @@
     `;
   }
 
+  function renderDividendsHtml(items) {
+    return `
+      <table>
+        <thead><tr><th>Year</th><th>Company</th><th>Dividends Declared</th><th>Tax Paid</th></tr></thead>
+        <tbody>${items.map(d =>
+          `<tr><td>${d.year}</td><td>${d.company}</td><td>£${d.declared.toLocaleString()}</td><td>£${d.taxPaid.toLocaleString()}</td></tr>`
+        ).join("")}</tbody>
+      </table>
+    `;
+  }
+
+  function renderShareholdingsHtml(items) {
+    return `
+      <table>
+        <thead><tr><th>Company</th><th>Company Number</th><th>Share Class</th><th>Holding</th><th>Held Since</th></tr></thead>
+        <tbody>${items.map(s =>
+          `<tr><td>${s.company}</td><td class="mono">${s.companyNumber}</td><td>${s.shareClass}</td><td>${s.held}%</td><td>${s.since}</td></tr>`
+        ).join("")}</tbody>
+      </table>
+    `;
+  }
+
   function renderResult(order) {
     const { payload, report } = order;
     document.getElementById("result-case-id").textContent = "Case · " + order.transactionNumber.slice(0, 8);
@@ -1616,6 +1928,8 @@
     document.getElementById("r-payroll-employers").innerHTML = renderPayrollEmployersHtml(report);
     document.getElementById("r-self-employment").innerHTML = renderSelfEmploymentHtml(report.selfEmployment);
     document.getElementById("r-other-income").innerHTML = renderOtherIncomeHtml(report.otherIncome);
+    document.getElementById("r-dividends").innerHTML = renderDividendsHtml(report.dividends || []);
+    document.getElementById("r-shareholdings").innerHTML = renderShareholdingsHtml(report.shareholdings || []);
     document.getElementById("r-taxes-paid").innerHTML = renderTaxesPaidHtml(report.taxesPaid);
   }
 
@@ -1638,16 +1952,11 @@
     showView("portal");
   });
 
-  document.getElementById("consent-cases-btn").addEventListener("click", () => {
+  document.getElementById("inbox-cases-btn").addEventListener("click", () => {
     showView("portal");
   });
 
-  // ---------- The consent link ----------
-  //
-  // It used to be inert text. Two things were missing rather than one: a broker's
-  // whole job on an AWAITING CONSENT case is getting the link to the applicant,
-  // and the applicant's side of the journey was described in words and never
-  // shown.
+  // ---------- The applicant's side ----------
 
   async function copyLink(urlElementId, noteElementId) {
     const note = document.getElementById(noteElementId);
@@ -1664,77 +1973,55 @@
     }
   }
 
-  function openApplicantView() {
+  document.getElementById("pd-consent-copy-btn").addEventListener(
+    "click", () => copyLink("pd-consent-url", "pd-consent-copy-note"));
+
+  // Which leg the applicant is currently authorising.
+  let currentLeg = "RESIDENTIAL";
+
+  function openApplicantView(leg) {
     if (!currentOrder || currentOrder.status !== "AWAITING_CONSENT") return;
+    currentLeg = leg || legsFor(currentOrder)[0];
+    const copy = LEG_COPY[currentLeg];
+
+    document.getElementById("applicant-title").textContent = copy.title;
+    document.getElementById("applicant-subtitle").textContent = copy.subtitle;
+    document.getElementById("applicant-address").textContent =
+      currentLeg === "COMMERCIAL" ? currentOrder.companyConsentUrl : currentOrder.consentUrl;
+    document.getElementById("gov-heading").textContent = copy.heading;
+    document.getElementById("gov-lede").textContent = copy.lede;
+    document.getElementById("gov-id-label").textContent = copy.idLabel;
+    document.getElementById("gov-scope").textContent = copy.scope;
+
     showFlowView(applicantView, "applicant-case-id", currentOrder);
   }
 
-  // Filled from the order rather than written once, because the point of showing
-  // it is that it is personalised: an applicant who cannot tell whether an email
-  // is really about their own application does not click the link in it.
-  function openEmailView() {
-    if (!currentOrder || currentOrder.status !== "AWAITING_CONSENT") return;
-    const { payload } = currentOrder;
-
-    document.getElementById("email-to").textContent =
-      payload.firstName + " " + payload.lastName + " <" + payload.email + ">";
-    document.getElementById("email-subject").textContent =
-      "Confirm your income for your application with " + CLIENT_NAME;
-    document.getElementById("email-greeting").textContent = "Dear " + payload.firstName + ",";
-    document.getElementById("email-intro").textContent =
-      CLIENT_NAME + " has asked us to confirm your income and employment as part of your "
-      + PURPOSE_PHRASES[payload.identifyingPurpose] + ". HMRC can share that with us "
-      + "directly, but only with your permission.";
-    document.getElementById("email-reference").textContent =
-      payload.customerReference || currentOrder.transactionNumber.slice(0, 12);
-
-    showFlowView(emailView, "email-case-id", currentOrder);
-  }
-
-  document.getElementById("consent-email-btn").addEventListener("click", openEmailView);
-
-  // The link in the email is the link. Pressing it goes where it goes.
-  document.getElementById("email-link-btn").addEventListener("click", openApplicantView);
-
-  document.getElementById("email-back-btn").addEventListener("click", () => {
-    if (!currentOrder) return;
-    renderConsent(currentOrder);
-    showFlowView(consentView, "consent-case-id", currentOrder);
-  });
-
-  document.getElementById("consent-copy-btn").addEventListener(
-    "click", () => copyLink("consent-url", "consent-copy-note"));
-  document.getElementById("pd-consent-copy-btn").addEventListener(
-    "click", () => copyLink("pd-consent-url", "pd-consent-copy-note"));
-  document.getElementById("consent-open-btn").addEventListener("click", openApplicantView);
-
-  const consentUrlEl = document.getElementById("consent-url");
-  consentUrlEl.addEventListener("click", openApplicantView);
-  consentUrlEl.addEventListener("keydown", (e) => {
-    // Clickable text has to be operable from the keyboard too, or it is a button
-    // only some people can press.
-    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openApplicantView(); }
-  });
-
   document.getElementById("applicant-back-btn").addEventListener("click", () => {
     if (!currentOrder) return;
-    renderConsent(currentOrder);
-    showFlowView(consentView, "consent-case-id", currentOrder);
+    openInbox(currentOrder, true);
   });
 
-  // Authorising from the applicant's side is the same event as the simulate
-  // button on the broker's side, so it runs the same code rather than a second
-  // copy of it.
   document.getElementById("applicant-authorise-btn").addEventListener("click", () => {
-    // Deliberately not the simulate button's handler. For the applicant who
-    // never consents, that one expires the case -- which is right for "nobody
-    // acted" and wrong for "they just pressed Authorise".
+    if (!currentOrder || currentOrder.status !== "AWAITING_CONSENT") return;
+
+    const authorised = [...(currentOrder.authorised || [])];
+    if (!authorised.includes(currentLeg)) authorised.push(currentLeg);
+    currentOrder = { ...currentOrder, authorised };
+    updateCaseInPortal(currentOrder);
+
+    // A journey with two legs is not consented until both are. Back to the inbox
+    // for the other link, which is exactly what the applicant has to do.
+    const outstanding = legsFor(currentOrder).filter(l => !authorised.includes(l));
+    if (outstanding.length) {
+      openInbox(currentOrder, true);
+      return;
+    }
+
     proceedAfterConsent();
   });
 
-  // Consent given. Separate from the button, because it is reachable two ways
-  // now -- the broker's simulate button and the applicant authorising on their
-  // own screen -- and those must not be two copies that drift apart.
+  // Consent given. Separate from the buttons, because it is reachable from every
+  // leg and those must not be copies that drift apart.
   async function proceedAfterConsent() {
     if (!currentOrder || currentOrder.status !== "AWAITING_CONSENT") return;
 
@@ -1758,14 +2045,6 @@
     renderResult(delivered);
     showFlowView(resultView, "result-case-id", delivered);
   }
-
-  document.getElementById("consent-simulate-btn").addEventListener("click", () => {
-    // Guarded: the nav can move away from this screen and back, and consenting
-    // twice on a case that has already moved on would be nonsense.
-    if (!currentOrder || currentOrder.status !== "AWAITING_CONSENT") return;
-
-    proceedAfterConsent();
-  });
 
   // ---------- Client portal (ABC Ltd) ----------
   const APPLICANTS = [
@@ -1798,11 +2077,11 @@
     { category: "RESIDENTIAL", status: "DELIVERED", kind: "SELF_EMPLOYED" },
     { category: "COMMERCIAL",  status: "POLLING" },
     { category: "RESIDENTIAL", status: "FAILED" },
-    { category: "COMMERCIAL",  status: "DELIVERED", kind: "PAYE_ONLY" },
+    { category: "COMMERCIAL",  status: "DELIVERED", kind: "COMMERCIAL" },
     { category: "RESIDENTIAL", status: "READY" },
     { category: "RESIDENTIAL", status: "PENDING" },
     { category: "COMMERCIAL",  status: "EXPIRED" },
-    { category: "RESIDENTIAL", status: "DELIVERED", kind: "MIXED" },
+    { category: "COMMERCIAL",  status: "DELIVERED", kind: "RESIDENTIAL_AND_COMMERCIAL" },
     // Past the retention window, so the nightly sweep has already cleared it.
     // The case and its figures are still here; the applicant is not. Seeded
     // because this is the state a client is most likely to ask about and the
@@ -2105,7 +2384,7 @@
       // A seeded case has no link until somebody looks at it.
       const wantsConsent = status === "AWAITING_CONSENT";
       if (wantsConsent && !order.consentUrl) {
-        order.consentUrl = mockConsentUrl(order);
+        order.consentUrl = mockConsentUrl(order, "RESIDENTIAL");
         updateCaseInPortal(order);
       }
       document.getElementById("pd-consent-copy-note").textContent = "";
@@ -2169,6 +2448,8 @@
     document.getElementById("pd-payroll-employers").innerHTML = renderPayrollEmployersHtml(report);
     document.getElementById("pd-self-employment").innerHTML = renderSelfEmploymentHtml(report.selfEmployment);
     document.getElementById("pd-other-income").innerHTML = renderOtherIncomeHtml(report.otherIncome);
+    document.getElementById("pd-dividends").innerHTML = renderDividendsHtml(report.dividends || []);
+    document.getElementById("pd-shareholdings").innerHTML = renderShareholdingsHtml(report.shareholdings || []);
     document.getElementById("pd-taxes-paid").innerHTML = renderTaxesPaidHtml(report.taxesPaid);
 
     document.getElementById("pd-refnum").textContent = payload.customerReference || "-";
@@ -2247,7 +2528,7 @@
       detailOrder = {
         ...detailOrder,
         status: "AWAITING_CONSENT",
-        consentUrl: mockConsentUrl(detailOrder),
+        consentUrl: mockConsentUrl(detailOrder, "RESIDENTIAL"),
       };
     }
     updateCaseInPortal(detailOrder);
