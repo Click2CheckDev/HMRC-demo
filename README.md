@@ -24,7 +24,7 @@ The case list seeds one of each, so all of them can be shown:
 
 | Status | What it means |
 |---|---|
-| `PENDING` | created, not yet submitted to Equifax — seconds, in the live service |
+| `PENDING` | created, not yet submitted to Payroll — seconds, in the live service |
 | `AWAITING CONSENT` | waiting for the applicant to authorise at HMRC |
 | `POLLING` | consent given, waiting for HMRC to release the record |
 | `READY` | HMRC has released it; the report is being retrieved |
@@ -33,8 +33,8 @@ The case list seeds one of each, so all of them can be shown:
 | `EXPIRED` | 24 hours passed with no response |
 
 `PENDING` means one thing: created, and waiting for a worker to submit it to
-Equifax. In the live service that is seconds, which is why only one is seeded.
-A case appears in the list at `PENDING` the moment it is created, before Equifax
+Payroll. In the live service that is seconds, which is why only one is seeded.
+A case appears in the list at `PENDING` the moment it is created, before Payroll
 has been called at all — exactly what the real API does. Nothing is being polled
 at that point, so no refresh is offered.
 
@@ -61,7 +61,7 @@ consent, polling, ready, delivered report.
 ### Five test applicants, not an outcome switch
 
 The demo used to ask which outcome a case should take. That was its biggest
-remaining fiction: **nobody chooses.** What happens follows from what Equifax and
+remaining fiction: **nobody chooses.** What happens follows from what Payroll and
 HMRC hold about the person.
 
 So there is a list of test identities instead, each with their own records.
@@ -69,15 +69,14 @@ Picking one fills the form, and every field stays editable.
 
 | Applicant | What their records produce |
 |---|---|
-| **Marcy Okonjo** | Equifax do not hold them, so the request goes to HMRC and waits on the applicant. **This is the usual case** — around four in five. |
-| **Alan Pettifer** | An instant match in Equifax's own payroll data. No HMRC, no consent, report in one step. Equifax put this at 15–20%. |
+| **Marcy Okonjo** | Payroll does not hold them, so the request goes to HMRC and waits on the applicant. **This is the usual case** — around four in five. |
+| **Alan Pettifer** | An instant match in Payroll. No HMRC, no consent, report in one step, and this happens for 15–20% of applicants. |
 | **Dev Ramanathan** | Self-employed. Consent is still needed, and the report that comes back has **no employment section at all**. |
-| **Josie Hartnell** | No match at Equifax or HMRC. Closes as `FAILED`. Usually an NI number, date of birth or surname that does not match what is held. |
-| **Ewan Blaylock** | The consent link is sent and nothing happens. After 24 hours the case closes as `EXPIRED`, and can be resumed by hand. |
+| **Josie Hartnell** | No match at Payroll or HMRC. Closes as `FAILED`. Usually an NI number, date of birth or surname that does not match what is held. |
 
-Ewan Blaylock reaches exactly the same screen as Marcy Okonjo, which is the
-point: a broker cannot tell in advance which of the two they are dealing with.
-That is why the 24-hour window exists.
+An applicant who never gets round to it is not shown as a test identity: nothing
+Click2Check does changes that outcome, and the `EXPIRED` status is already in the
+seeded case list for anyone who wants to see it.
 
 ### The report shows only what HMRC hold
 
@@ -85,7 +84,7 @@ Three different report shapes, because three different people:
 
 - **Employment only** — payroll records and tax totals. No self-employment or
   other-income sections, because there is nothing to put in them.
-- **Employment and a business** — the shape of Equifax's own sample report,
+- **Employment and a business** — the shape of the provider's own sample report,
   which is where every figure in this demo comes from.
 - **Self-employed** — no employment section, and no *Retrieved Personal
   Information* section either. A sole trader has no employer record, and that
@@ -102,11 +101,22 @@ two-factor code** HMRC send them. Click2Check never sees any of it.
 
 There is **no address step**, which is worth saying because it is easy to assume
 otherwise: HMRC identify the person from the Government Gateway account itself.
-The address on the order form is used for the Equifax lookup, not for consent.
+The address on the order form is used for the Payroll lookup, not for consent.
 
 Once they authorise it, the case moves `AWAITING CONSENT` → `POLLING` → `READY` →
 `DELIVERED` on its own. `READY` is brief but real: one background task sees that
 HMRC has released the record, and a second one fetches it.
+
+**The applicant's journey is shown, not described.** *Preview the applicant's
+email* shows what they receive: addressed to them by name, naming the client who
+asked and why in their own terms rather than the broker's regulatory label,
+carrying their reference and the 24-hour limit. Pressing the button in the email
+opens the next step, which is what pressing it does.
+
+That matters more than it looks. We ask for the consent link rather than having
+the provider send it, so this is Click2Check's email in Click2Check's words, and
+it is the first thing an applicant ever sees of us. Whether they act on it
+decides whether the case completes at all.
 
 The **consent link is usable**, not decoration. **Copy link** puts it on the
 clipboard, and says so — or says it could not, rather than claiming success and
@@ -131,7 +141,7 @@ and pressing the button is acting.
 ### Residential and Commercial are the same thing
 
 Worth stating plainly, because an earlier version of this demo said otherwise.
-`query_category` is a reporting label. It is **never sent to Equifax**, nothing in
+`query_category` is a reporting label. It is **never sent to the provider**, nothing in
 the gateway branches on it, and a commercial case is processed exactly like a
 residential one. Its only jobs are filtering the case list and splitting the
 counts on the usage endpoint for billing.
@@ -144,17 +154,17 @@ appear across the same statuses as residential ones.
 Both appear across the same statuses in the seeded case list, and the category
 filter above it shows how `?query_category=` narrows the real `GET /orders/`.
 
-**Equifax put the instant match rate at 15&ndash;20%** (confirmed 25 September
-2026). So roughly **four cases in five reach the consent step**, which is why the
+**The instant match rate is 15&ndash;20%** (confirmed by the data provider on
+25 September 2026). So roughly **four cases in five reach the consent step**, which is why the
 demo defaults to it. Worth saying out loud when showing this: results are usually
 not instant, and the applicant has to be reachable and willing.
 
-Equifax also confirmed the National Insurance number is **not mandatory on their
-side** — a request without one is accepted — but supplying it improves the chance
+The data provider also confirmed the National Insurance number is **not mandatory
+on their side** — a request without one is accepted — but supplying it improves the chance
 of an instant match.
 
 The form requires it anyway, and that is **Click2Check's rule rather than
-Equifax's**. The field says nothing beyond being required, which is the right
+the provider's**. The field says nothing beyond being required, which is the right
 amount: an earlier version of this demo claimed "No verification is possible
 without it", and that was simply untrue. If anyone asks on a call, the honest
 answer is that we always collect it because it saves chasing the applicant for
@@ -243,7 +253,7 @@ real case can take rather than only the one that succeeds instantly. In October
 the outcome selector was replaced by a list of test applicants, and the retention
 section was added.
 
-Every figure in the report comes from Equifax's own sample report. Only the names
+Every figure in the report comes from the data provider's own sample report. Only the names
 are substituted: applicants, employers and businesses are invented, the
 National Insurance numbers use the `QQ` prefix HMRC never issues, and the mobile
 numbers are in Ofcom's reserved drama range. None of it can belong to a real

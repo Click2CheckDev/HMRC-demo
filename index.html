@@ -335,6 +335,22 @@
     background: var(--bg); color: var(--muted); cursor: not-allowed;
   }
 
+  .email-frame { border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
+  .email-head {
+    background: var(--bg); border-bottom: 1px solid var(--border); padding: 14px 18px;
+    font-size: 13px; line-height: 1.9;
+  }
+  .email-head .k { color: var(--muted); display: inline-block; min-width: 62px; }
+  .email-body { padding: 22px 18px; font-size: 14px; line-height: 1.65; }
+  .email-body p { margin: 0 0 14px; }
+  .email-cta {
+    display: inline-block; background: var(--brand); color: #fff; text-decoration: none;
+    padding: 11px 20px; border-radius: 4px; font-weight: 600; font-size: 14px;
+    border: none; cursor: pointer; font-family: inherit;
+  }
+  .email-cta:hover { opacity: 0.9; }
+  .email-small { font-size: 12.5px; color: var(--muted); }
+
   .note-box {
     border-left: 3px solid var(--border-strong); padding: 2px 0 2px 14px;
     font-size: 13.5px; line-height: 1.6; color: var(--muted); margin: 0 0 26px;
@@ -438,7 +454,7 @@
         <select id="demoApplicant"></select>
         <span class="field-hint" id="demoApplicantHint"></span>
       </div>
-      <p class="demo-note" style="margin-top:8px;">Nobody chooses an outcome in the live service: what happens next follows from what Equifax and HMRC hold about the person. These are fixed test identities with known records, so each path can be shown on demand. Picking one fills the form below; every field stays editable.</p>
+      <p class="demo-note" style="margin-top:8px;">Nobody chooses an outcome in the live service: what happens next follows from what <strong>Payroll</strong> and HMRC hold about the person. These are fixed test identities with known records, so each path can be shown on demand. Picking one fills the form below; every field stays editable.</p>
     </div>
 
     <div class="grid">
@@ -532,7 +548,7 @@
   <div id="consent-view" class="card hidden">
     <div class="eyebrow muted" id="consent-case-id"></div>
     <h1 class="title">Applicant consent required</h1>
-    <p class="subtitle">Equifax does not hold this person in its own payroll data, so the request has been forwarded to HMRC. The applicant is identified through the Government Gateway instead, which needs their authorisation.</p>
+    <p class="subtitle"><strong>Payroll</strong> does not hold this person, so the request has been forwarded to HMRC. The applicant is identified through the Government Gateway instead, which needs their authorisation.</p>
 
     <ol class="steps">
       <li><strong>We send the applicant a consent link.</strong> <span id="consent-delivery"></span></li>
@@ -546,6 +562,7 @@
             title="Open what the applicant sees"></code>
       <div class="link-actions">
         <button type="button" class="btn-secondary btn-small" id="consent-copy-btn">Copy link</button>
+        <button type="button" class="btn-secondary btn-small" id="consent-email-btn">Preview the applicant's email</button>
         <button type="button" class="btn-secondary btn-small" id="consent-open-btn">Open as the applicant</button>
         <span class="muted" id="consent-copy-note"></span>
       </div>
@@ -558,6 +575,41 @@
       <button class="btn-secondary" id="consent-cases-btn">Leave it pending</button>
     </div>
     <p class="demo-note">That first button stands in for something the applicant does on GOV.UK in their own time &mdash; minutes or hours after the case is opened, not seconds.</p>
+  </div>
+
+  <!-- STEP 2c-i: THE EMAIL THE APPLICANT RECEIVES
+       We ask for the consent link rather than having it sent for us
+       (isExternalCommunicationHandledByVerifier), so this is our email, in our
+       words. Which means it is worth showing: it is the first thing the
+       applicant ever sees of Click2Check, and whether they act on it decides
+       whether the case completes at all. -->
+  <div id="email-view" class="card hidden">
+    <div class="sim-banner">Simulation &mdash; a preview of the email the applicant receives. Nothing is sent.</div>
+
+    <div class="eyebrow muted" id="email-case-id"></div>
+    <h1 class="title">What the applicant receives</h1>
+    <p class="subtitle">Personalised, and sent by us rather than by the data provider, so the applicant recognises who is asking and why.</p>
+
+    <div class="email-frame">
+      <div class="email-head">
+        <div><span class="k">From</span> Click2Check &lt;noreply@click2check.example&gt;</div>
+        <div><span class="k">To</span> <span id="email-to"></span></div>
+        <div><span class="k">Subject</span> <strong id="email-subject"></strong></div>
+      </div>
+      <div class="email-body">
+        <p id="email-greeting"></p>
+        <p id="email-intro"></p>
+        <p><button type="button" class="email-cta" id="email-link-btn">Confirm your income with HMRC</button></p>
+        <p>You will sign in with your own Government Gateway details and approve the request. HMRC then send the figures to us directly. <strong>We never see your sign-in details.</strong></p>
+        <p class="email-small">This link expires in 24 hours. If you were not expecting this, you can ignore it &mdash; nothing is shared unless you approve it.</p>
+        <p class="email-small">Your reference: <span class="mono" id="email-reference"></span></p>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn-secondary" id="email-back-btn">Back to the case</button>
+    </div>
+    <p class="demo-note">Pressing the button in the email is what the applicant does next, in their own time. It opens the page in the following step.</p>
   </div>
 
   <!-- STEP 2c-ii: WHAT THE APPLICANT SEES
@@ -575,7 +627,7 @@
 
     <div class="eyebrow muted" id="applicant-case-id"></div>
     <h1 class="title">What the applicant sees</h1>
-    <p class="subtitle">Opening the consent link takes the applicant to Equifax's verification page, where HMRC identify them through their own Government Gateway account. Click2Check never sees any of these details.</p>
+    <p class="subtitle">Opening the consent link takes the applicant to the verification page, where HMRC identify them through their own Government Gateway account. Click2Check never sees any of these details.</p>
 
     <div class="grid">
       <div class="field readonly-field">
@@ -593,7 +645,7 @@
       </div>
     </div>
 
-    <p class="note-box"><strong>No address is asked for.</strong> Worth knowing, because it is easy to assume otherwise: HMRC identify the person from the Government Gateway account itself. The address on the order form is used for the Equifax lookup, not for this step.</p>
+    <p class="note-box"><strong>No address is asked for.</strong> Worth knowing, because it is easy to assume otherwise: HMRC identify the person from the Government Gateway account itself. The address on the order form is used for the <strong>Payroll</strong> lookup, not for this step.</p>
 
     <p class="note-box">Whichever of these the applicant does, they do it in their own time &mdash; minutes or hours after the case is opened, not seconds. The broker does not wait on this screen.</p>
 
@@ -617,7 +669,7 @@
   <div id="failed-view" class="card centered hidden">
     <div class="eyebrow muted" id="failed-case-id"></div>
     <h2 class="processing-title">No record found</h2>
-    <p class="subtitle" style="margin:14px auto 0; text-align:center; max-width:470px;">Neither Equifax's payroll data nor the HMRC route produced a match for these details, so the case is closed as <span class="status-pill failed">FAILED</span>.</p>
+    <p class="subtitle" style="margin:14px auto 0; text-align:center; max-width:470px;">Neither <strong>Payroll</strong> nor the HMRC route produced a match for these details, so the case is closed as <span class="status-pill failed">FAILED</span>.</p>
     <p class="note-box" style="max-width:470px; margin:22px auto 26px;">Most often a data-entry problem &mdash; an NI number, date of birth or surname that does not match what HMRC holds. Correcting the details and opening a new case is the normal next step.</p>
     <div class="actions" style="justify-content:center;">
       <button class="btn-secondary" id="failed-new-case-btn">Start a new case</button>
@@ -942,6 +994,20 @@
     const chars = "0123456789abcdef";
     return "DEMO-" + Array.from({ length: 20 }, () => chars[Math.floor(Math.random() * 16)]).join("");
   }
+  // The client this demo is signed in as. One constant, so the email and the
+  // headings cannot disagree about who is asking.
+  const CLIENT_NAME = "ABC Ltd";
+
+  // How the permissible purpose reads to the applicant. "Application for
+  // mortgage" is the label a broker picks; it is not how you address somebody
+  // about their own application.
+  const PURPOSE_PHRASES = {
+    MO: "mortgage application",
+    CC: "credit application",
+    ES: "pre-employment screening",
+    TS: "tenancy application",
+  };
+
   const PURPOSE_LABELS = {
     MO: "Application for mortgage",
     CC: "Application for credit",
@@ -1017,7 +1083,7 @@
   // people and the real report renders only what is there.
   //
   // No calculation anywhere -- just the fixed data above, plus the retrieved
-  // name/address enrichment pattern Equifax's own sample shows (middle initial
+  // name/address enrichment pattern the provider's own sample shows (middle initial
   // and an "Apartment" prefix added by the verification).
   const REPORT_SHAPES = {
     // A plain PAYE applicant. HMRC hold payroll records and the tax totals and
@@ -1026,13 +1092,13 @@
       employers: FIXED_EMPLOYERS, selfEmployment: [], otherIncome: [],
       taxesPaid: FIXED_TAXES_PAID, retrieved: true,
     },
-    // Employment with a business alongside it. This is the shape of Equifax's
+    // Employment with a business alongside it. This is the shape of the provider's
     // own sample report, which is where every figure above comes from.
     MIXED: {
       employers: FIXED_EMPLOYERS, selfEmployment: FIXED_SELF_EMPLOYMENT,
       otherIncome: FIXED_OTHER_INCOME, taxesPaid: FIXED_TAXES_PAID, retrieved: true,
     },
-    // Self-employed, so there is no employer at all: Equifax return
+    // Self-employed, so there is no employer at all: the provider returns
     // apariResponse as an empty list and everything is in annualIncomeSummaries.
     //
     // No employer entry also means no employeeInformation, and that is where the
@@ -1086,7 +1152,7 @@
   const DEMO_APPLICANTS = [
     {
       label: "Marcy Okonjo — PAYE, needs HMRC consent",
-      hint: "Equifax do not hold this person's payroll data, so the request goes to HMRC and waits on the applicant. Around four cases in five look like this.",
+      hint: "Payroll does not hold this person, so the request goes to HMRC and waits on the applicant. Around four cases in five look like this.",
       outcome: "CONSENT", reportKind: "MIXED",
       firstName: "Marcy", lastName: "Okonjo", dob: "1985-03-14", niNumber: "QQ123456C",
       addressLine1: "12 Quayside", postalCode: "NE1 1AQ",
@@ -1095,8 +1161,8 @@
       verificationType: "VOI", identifyingPurpose: "MO",
     },
     {
-      label: "Alan Pettifer — instant match in Equifax's own payroll data",
-      hint: "Found without involving HMRC at all, so the report comes back in one step and the applicant does nothing. Equifax put this at 15-20% of applicants.",
+      label: "Alan Pettifer — instant match in Payroll",
+      hint: "Found without involving HMRC at all, so the report comes back in one step and the applicant does nothing. This happens for 15-20% of applicants.",
       outcome: "INSTANT", reportKind: "PAYE_ONLY",
       firstName: "Alan", lastName: "Pettifer", dob: "1979-11-02", niNumber: "QQ123457C",
       addressLine1: "4 Grainger Street", postalCode: "NE1 5JQ",
@@ -1116,23 +1182,13 @@
     },
     {
       label: "Josie Hartnell — no match anywhere",
-      hint: "Neither Equifax's payroll data nor the HMRC route produces a match for these details, so the case closes as FAILED and a corrected one has to be opened.",
+      hint: "Neither Payroll nor the HMRC route produces a match for these details, so the case closes as FAILED and a corrected one has to be opened.",
       outcome: "NO_RECORD",
       firstName: "Josie", lastName: "Hartnell", dob: "1996-02-09", niNumber: "QQ123459C",
       addressLine1: "22 Dean Street", postalCode: "NE1 1PG",
       email: "josie.hartnell@example.com", mobile: "07700 900104",
       customerReference: "ABC-1044", employerName: "",
       verificationType: "VOE", identifyingPurpose: "ES",
-    },
-    {
-      label: "Ewan Blaylock — never completes the consent",
-      hint: "The link is sent and nothing happens. After 24 hours the case closes as EXPIRED. It can be resumed by hand if the applicant turns up late.",
-      outcome: "EXPIRES", reportKind: "MIXED",
-      firstName: "Ewan", lastName: "Blaylock", dob: "1982-08-30", niNumber: "QQ123460C",
-      addressLine1: "31 Clayton Street", postalCode: "NE1 5PN",
-      email: "ewan.blaylock@example.com", mobile: "",
-      customerReference: "ABC-1045", employerName: "Brightwell Retail Ltd",
-      verificationType: "VOI", identifyingPurpose: "TS",
     },
   ];
 
@@ -1149,10 +1205,10 @@
   }
   // Reserved .example TLD on purpose: unmistakably not a live URL, so this
   // cannot be mistaken for a real consent link if the screen is photographed.
-  // The real one comes back from Equifax as
+  // The real one comes back from the provider as
   // additionalVerificationDetails.externalVerificationUrlForVerificationSubject.
   function mockConsentUrl(order) {
-    return "https://verification-exchange.example/consent/" + order.transactionNumber;
+    return "https://verify.click2check.example/consent/" + order.transactionNumber;
   }
 
   function simulateGetResult(order) {
@@ -1348,8 +1404,10 @@
 
   // One list, used by both the flow steps and the nav, so a new step can never
   // be left visible underneath another one.
+  const emailView = document.getElementById("email-view");
   const applicantView = document.getElementById("applicant-view");
-  const FLOW_VIEWS = [formView, processingView, consentView, applicantView, pollingView, failedView, resultView];
+  const FLOW_VIEWS = [formView, processingView, consentView, emailView, applicantView,
+                      pollingView, failedView, resultView];
 
   function hideFlowViews() {
     FLOW_VIEWS.forEach(v => v.classList.add("hidden"));
@@ -1396,7 +1454,7 @@
     created.demoOutcome = outcome;
     created.reportKind = chosen.reportKind;
     // The real API returns 201 with status PENDING, and the case is in the
-    // client's list from that moment -- before Equifax has been called at all.
+    // client's list from that moment -- before the provider has been called at all.
     // Adding it only once the outcome was known meant PENDING was a state no
     // residential case was ever seen in.
     currentOrder = { ...created, status: "PENDING" };
@@ -1404,7 +1462,7 @@
     document.getElementById("processing-case-id").textContent = "Case \u00b7 " + created.transactionNumber.slice(0, 8);
 
     // No special case for commercial. query_category is a reporting label -- it
-    // is never sent to Equifax, and nothing in the gateway branches on it.
+    // is never sent to the provider, and nothing in the gateway branches on it.
     await resolveOutcome(currentOrder, outcome);
   });
 
@@ -1429,11 +1487,7 @@
 
     // The common case the demo used to hide: HMRC hands back a consent link
     // and nothing further happens until the applicant acts on it.
-    //
-    // EXPIRES takes the same branch on purpose. From the broker's side the two
-    // are identical at this point -- you cannot tell in advance whether someone
-    // will complete it, which is exactly why the 24-hour window exists.
-    if (outcome === "CONSENT" || outcome === "EXPIRES") {
+    if (outcome === "CONSENT") {
       currentOrder = {
         ...order,
         status: "AWAITING_CONSENT",
@@ -1486,17 +1540,7 @@
     document.getElementById("consent-delivery").textContent = delivery;
     document.getElementById("consent-url").textContent = order.consentUrl;
 
-    // Whether this applicant completes the consent is a fact about them, not a
-    // choice, so the button offers whichever thing they actually do. A broker
-    // cannot tell the two apart at this point either -- which is the reason the
-    // 24-hour window exists at all.
     document.getElementById("consent-copy-note").textContent = "";
-
-    const expires = order.demoOutcome === "EXPIRES";
-    const btn = document.getElementById("consent-simulate-btn");
-    btn.textContent = expires
-      ? "Simulate the 24 hours elapsing"
-      : "Simulate the applicant consenting";
   }
 
   function renderPayrollEmployersHtml(report) {
@@ -1625,6 +1669,39 @@
     showFlowView(applicantView, "applicant-case-id", currentOrder);
   }
 
+  // Filled from the order rather than written once, because the point of showing
+  // it is that it is personalised: an applicant who cannot tell whether an email
+  // is really about their own application does not click the link in it.
+  function openEmailView() {
+    if (!currentOrder || currentOrder.status !== "AWAITING_CONSENT") return;
+    const { payload } = currentOrder;
+
+    document.getElementById("email-to").textContent =
+      payload.firstName + " " + payload.lastName + " <" + payload.email + ">";
+    document.getElementById("email-subject").textContent =
+      "Confirm your income for your application with " + CLIENT_NAME;
+    document.getElementById("email-greeting").textContent = "Dear " + payload.firstName + ",";
+    document.getElementById("email-intro").textContent =
+      CLIENT_NAME + " has asked us to confirm your income and employment as part of your "
+      + PURPOSE_PHRASES[payload.identifyingPurpose] + ". HMRC can share that with us "
+      + "directly, but only with your permission.";
+    document.getElementById("email-reference").textContent =
+      payload.customerReference || currentOrder.transactionNumber.slice(0, 12);
+
+    showFlowView(emailView, "email-case-id", currentOrder);
+  }
+
+  document.getElementById("consent-email-btn").addEventListener("click", openEmailView);
+
+  // The link in the email is the link. Pressing it goes where it goes.
+  document.getElementById("email-link-btn").addEventListener("click", openApplicantView);
+
+  document.getElementById("email-back-btn").addEventListener("click", () => {
+    if (!currentOrder) return;
+    renderConsent(currentOrder);
+    showFlowView(consentView, "consent-case-id", currentOrder);
+  });
+
   document.getElementById("consent-copy-btn").addEventListener(
     "click", () => copyLink("consent-url", "consent-copy-note"));
   document.getElementById("pd-consent-copy-btn").addEventListener(
@@ -1687,25 +1764,6 @@
     // twice on a case that has already moved on would be nonsense.
     if (!currentOrder || currentOrder.status !== "AWAITING_CONSENT") return;
 
-    // This applicant never completes it. 24 hours pass with no authorisation and
-    // the gateway closes the case. The wording is its own error_detail for giving
-    // up at the attempt limit.
-    if (currentOrder.demoOutcome === "EXPIRES") {
-      // Held in a local, because showView() deliberately clears currentOrder --
-      // navigating away is meant to abandon whatever case was mid-flow. Reading
-      // it back afterwards hands openCaseDetail a null.
-      const expired = {
-        ...currentOrder,
-        status: "EXPIRED",
-        errorDetail: "Polling gave up after max attempts",
-      };
-      currentOrder = expired;
-      updateCaseInPortal(expired);
-      showView("portal");
-      openCaseDetail(expired);
-      return;
-    }
-
     proceedAfterConsent();
   });
 
@@ -1724,7 +1782,7 @@
   //
   // Commercial cases appear across the same statuses as residential ones,
   // because they are processed identically. query_category is a reporting label;
-  // it is never sent to Equifax and nothing branches on it.
+  // it is never sent to the provider and nothing branches on it.
   //
   // Every state the gateway can put an order in appears here. DELIVERED appears
   // most often because that is what a working account mostly looks like. Only one
@@ -1986,7 +2044,7 @@
 
   function pendingText(order) {
     if (order.status !== "PENDING") return PENDING_TEXT[order.status] || "This case is still being processed.";
-    return "Created, and waiting for a worker to submit it to Equifax. In the live service that takes seconds.";
+    return "Created, and waiting to be submitted to Payroll. In the live service that takes seconds.";
   }
 
   // Which case the detail view is currently showing. Separate from currentOrder,
@@ -2058,7 +2116,7 @@
       // A case still held for review is not being polled -- nothing has been
       // submitted yet, so there is nothing to poll.
       document.getElementById("pd-pending-detail").textContent = status === "PENDING"
-        ? "Nothing has been sent to Equifax yet, so there is nothing to check."
+        ? "Nothing has been sent to Payroll yet, so there is nothing to check."
         : "Followed automatically for up to 24 hours, then closed as EXPIRED.";
 
       // Only offer to consent on a case that is actually waiting for it.
