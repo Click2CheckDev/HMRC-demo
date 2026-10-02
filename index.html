@@ -576,9 +576,7 @@
       <div class="field">
         <label for="demoApplicant">Pick a test applicant</label>
         <select id="demoApplicant"></select>
-        <span class="field-hint" id="demoApplicantHint"></span>
       </div>
-      <p class="demo-note" style="margin-top:8px;">Nobody chooses an outcome in the live service: what happens next follows from what <strong>Payroll</strong> and HMRC hold about the person. These are fixed test identities with known records, so each path can be shown on demand. Picking one fills the form below; every field stays editable.</p>
     </div>
 
     <div class="grid">
@@ -637,7 +635,6 @@
       <div class="field">
         <label>Mobile number <span style="font-weight:400; color:var(--muted);">(optional)</span></label>
         <input id="mobile" type="tel" />
-        <span class="field-hint">Used to text the consent link as well as emailing it.</span>
       </div>
       <div class="field">
         <label>Your reference <span style="font-weight:400; color:var(--muted);">(optional)</span></label>
@@ -707,12 +704,10 @@
 
     <div class="eyebrow muted" id="inbox-case-id"></div>
     <h1 class="title">The applicant receives an email</h1>
-    <p class="subtitle" id="inbox-subtitle"></p>
 
     <div class="mail-client">
       <div class="mail-toolbar">
         <span class="mail-account" id="inbox-account"></span>
-        <span class="mail-count" id="inbox-delivery"></span>
         <span class="mail-count" id="inbox-unread"></span>
       </div>
       <div class="mail-split">
@@ -768,7 +763,6 @@
 
     <div class="eyebrow muted" id="applicant-case-id"></div>
     <h1 class="title" id="applicant-title"></h1>
-    <p class="subtitle" id="applicant-subtitle"></p>
 
     <div class="browser-frame">
       <div class="browser-bar">
@@ -829,7 +823,6 @@
       </div>
     </div>
 
-    <p class="note-box"><strong>No address is asked for.</strong> Worth knowing, because it is easy to assume otherwise: HMRC identify the person from the Government Gateway account itself. The address on the order form is used for the <strong>Payroll</strong> lookup, not for this step.</p>
 
     <div class="actions">
       <button class="btn-primary" id="applicant-authorise-btn">Authorise the data share</button>
@@ -1397,7 +1390,6 @@
   const DEMO_APPLICANTS = [
     {
       label: "Marcy Okonjo — PAYE, needs HMRC consent",
-      hint: "Payroll does not hold this person, so the request goes to HMRC and waits on the applicant. Around four cases in five look like this.",
       outcome: "CONSENT", reportKind: "MIXED",
       journey: "RESIDENTIAL",
       firstName: "Marcy", lastName: "Okonjo", dob: "1985-03-14", niNumber: "QQ123456C",
@@ -1408,7 +1400,6 @@
     },
     {
       label: "Alan Pettifer — instant match in Payroll",
-      hint: "Found without involving HMRC at all, so the report comes back in one step and the applicant does nothing. This happens for 15-20% of applicants.",
       outcome: "INSTANT", reportKind: "PAYE_ONLY",
       journey: "RESIDENTIAL",
       firstName: "Alan", lastName: "Pettifer", dob: "1979-11-02", niNumber: "QQ123457C",
@@ -1419,7 +1410,6 @@
     },
     {
       label: "Dev Ramanathan — self-employed, no employer",
-      hint: "Consent is still needed. The report that comes back has no employment section at all: a sole trader's income sits in HMRC's annual summaries instead, and there is no employer record for HMRC to have enriched the name and address from.",
       outcome: "CONSENT", reportKind: "SELF_EMPLOYED",
       journey: "RESIDENTIAL",
       firstName: "Dev", lastName: "Ramanathan", dob: "1990-06-21", niNumber: "QQ123458C",
@@ -1430,7 +1420,6 @@
     },
     {
       label: "Josie Hartnell — no match anywhere",
-      hint: "Neither Payroll nor the HMRC route produces a match for these details, so the case closes as FAILED and a corrected one has to be opened.",
       outcome: "NO_RECORD",
       journey: "RESIDENTIAL",
       firstName: "Josie", lastName: "Hartnell", dob: "1996-02-09", niNumber: "QQ123459C",
@@ -1441,7 +1430,6 @@
     },
     {
       label: "Imran Chaudhary — commercial, director of his own company",
-      hint: "Takes his income as dividends rather than wages, so a payroll lookup finds nothing. He follows a separate company link, and the report comes back with dividends and shareholdings instead of employment.",
       outcome: "CONSENT", reportKind: "COMMERCIAL",
       journey: "COMMERCIAL",
       firstName: "Imran", lastName: "Chaudhary", dob: "1977-05-19", niNumber: "QQ123461C",
@@ -1452,7 +1440,6 @@
     },
     {
       label: "Rosalind Whitaker — residential and commercial",
-      hint: "Employed and a director, so both journeys apply. She receives two links and has to follow both: the personal one and the company one. The report carries employment, dividends and shareholdings together.",
       outcome: "CONSENT", reportKind: "RESIDENTIAL_AND_COMMERCIAL",
       journey: "BOTH",
       firstName: "Rosalind", lastName: "Whitaker", dob: "1988-12-03", niNumber: "QQ123462C",
@@ -1499,7 +1486,6 @@
       lede: "HMRC need to know it is you before releasing your employment and income record.",
       idLabel: "Government Gateway user ID",
       scope: "Approving this lets HMRC share your employment, income and tax records with Click2Check. It does not give access to anything else.",
-      subtitle: "The personal consent. HMRC identify the applicant from their own Government Gateway account.",
     },
     COMMERCIAL: {
       cta: "Confirm your company income with HMRC",
@@ -1508,7 +1494,6 @@
       lede: "A company's records sit behind its own Government Gateway account, not the director's personal one. That is why this is a separate link.",
       idLabel: "Organisation Government Gateway user ID",
       scope: "Approving this lets HMRC share the company's dividends, shareholdings and tax records with Click2Check.",
-      subtitle: "The company consent, on its own link. A director's income arrives as dividends rather than wages, so a payroll lookup finds nothing.",
     },
   };
 
@@ -1838,7 +1823,6 @@
 
   function applyApplicant() {
     const a = chosenApplicant();
-    document.getElementById("demoApplicantHint").textContent = a.hint;
     APPLICANT_FIELDS.forEach(field => {
       const el = document.getElementById(field);
       if (el && a[field] !== undefined) el.value = a[field];
@@ -1940,7 +1924,7 @@
     if (legs.length > 1) {
       needs.push("Your <strong>company’s</strong> Government Gateway user ID and password as well, which are separate from your own");
     }
-    needs.push("About five minutes, and somewhere you can read a text message");
+    needs.push("About five minutes, and your phone to hand for HMRC’s access code");
     document.getElementById("email-needs").innerHTML =
       needs.map(n => `<li>${n}</li>`).join("");
 
@@ -1958,14 +1942,6 @@
 
     const legs = legsFor(order);
     document.getElementById("inbox-account").textContent = order.payload.email;
-    // Both channels, because reaching the applicant is the whole dependency and a
-    // text is often what actually gets read.
-    document.getElementById("inbox-delivery").textContent = order.payload.mobile
-      ? "also texted to " + order.payload.mobile
-      : "no mobile on file";
-    document.getElementById("inbox-subtitle").textContent = legs.length > 1
-      ? "Two links, because a company's records sit behind its own Government Gateway account. Both have to be followed."
-      : LEG_COPY[legs[0]].subtitle;
 
     const reopening = !!keepOpen;
     document.getElementById("inbox-empty").classList.toggle("hidden", reopening);
@@ -2138,7 +2114,6 @@
     const copy = LEG_COPY[currentLeg];
 
     document.getElementById("applicant-title").textContent = copy.title;
-    document.getElementById("applicant-subtitle").textContent = copy.subtitle;
     document.getElementById("applicant-address").textContent =
       currentLeg === "COMMERCIAL" ? currentOrder.companyConsentUrl : currentOrder.consentUrl;
     document.getElementById("gov-heading").textContent = copy.heading;

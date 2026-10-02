@@ -65,7 +65,9 @@ remaining fiction: **nobody chooses.** What happens follows from what Payroll an
 HMRC hold about the person.
 
 So there is a list of test identities instead, each with their own records.
-Picking one fills the form, and every field stays editable.
+Picking one fills the form, and every field stays editable. The label says who they
+are and the rest is left to the person demonstrating: a paragraph of commentary on
+the order form is not what a customer is there to read.
 
 | Applicant | What their records produce |
 |---|---|
@@ -116,8 +118,12 @@ the whole journey depends on.
 Worth showing because we ask for the link rather than having the data provider
 send it, so this is Click2Check's email in Click2Check's words. It is the first
 thing an applicant ever sees of us, and whether they act on it decides whether the
-case completes at all. The inbox also says the link was texted as well as emailed:
-reaching the applicant is the dependency.
+case completes at all.
+
+The mobile number stays on the form as an optional field, because the API accepts
+one, but the demo makes no claim about texting the link. **Nothing in the service
+sends SMS**, and a demo that implies otherwise is promising a channel that does not
+exist.
 
 The email **lists what they will need before they start**: the Government Gateway
 user ID, the password, and the phone or authenticator app HMRC send the access
@@ -167,8 +173,7 @@ provider sent on 25 September — their API returned it the same afternoon.
 
 That page is styled as a government service and asks for the three things HMRC
 ask for: the Government Gateway user ID, the password, and the access code HMRC
-send. It states what approving actually shares, and that **no address is asked
-for** — HMRC identify the person from the account itself.
+send, and states what approving actually shares.
 
 The fields arrive **pre-populated**, so it reads as a form somebody has filled in
 rather than empty boxes, and the recovery routes HMRC offer are shown — *forgotten
