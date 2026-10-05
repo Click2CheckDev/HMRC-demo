@@ -768,6 +768,8 @@
           <option value="RESIDENTIAL">Residential</option>
           <option value="COMMERCIAL">Commercial</option>
         </select>
+        <span class="field-hint">Your label, for your own reporting and billing. It is not sent to HMRC and does not
+          change the check: the same records are requested either way.</span>
       </div>
       <div class="field">
         <label>Verification type</label>
@@ -1445,7 +1447,7 @@
   // Company-side figures. UNLIKE every other number in this file, these are
   // invented: the data provider's sample report covers employment and
   // self-assessment only, and they have given us nothing for the commercial
-  // journey. Shaped the way a director's return reads, and labelled as
+  // category. Shaped the way a director's return reads, and labelled as
   // illustrative in the README so nobody mistakes them for observed data.
   // There were Dividends and Shareholdings tables here, and they were invented.
   //
@@ -1509,7 +1511,7 @@
     },
     // A director taking income from their own company. No payroll, because the
     // money arrives as dividends rather than wages, which is the whole reason
-    // the commercial journey exists: a payroll lookup finds nothing.
+    // commercial category exists: a payroll lookup finds nothing for them.
     //
     // No self-employment either -- they are not a sole trader. What HMRC hold
     // for them is the other-income side of the annual summaries, which is where
@@ -1571,7 +1573,7 @@
   //
   // Payroll and self assessment are two different records and two different
   // documents. A director taking their income as dividends has no payroll entry
-  // at all -- that is the whole reason the commercial journey exists -- so
+  // at all -- which is the whole reason a case gets filed as commercial -- so
   // heading their document "Employment Income Verification" describes a record
   // that does not exist in it. What evidences their income is their self
   // assessment, the SA302.
@@ -1617,7 +1619,6 @@
     {
       label: "Marcy Okonjo — PAYE, needs HMRC consent",
       outcome: "CONSENT", reportKind: "MIXED",
-      journey: "RESIDENTIAL",
       firstName: "Marcy", lastName: "Okonjo", dob: "1985-03-14", niNumber: "QQ123456C",
       addressLine1: "12 Quayside", postalCode: "NE1 1AQ",
       email: "marcy.okonjo@example.com", mobile: "07700 900102",
@@ -1627,7 +1628,6 @@
     {
       label: "Alan Pettifer — instant match in Payroll",
       outcome: "INSTANT", reportKind: "PAYE_ONLY",
-      journey: "RESIDENTIAL",
       firstName: "Alan", lastName: "Pettifer", dob: "1979-11-02", niNumber: "QQ123457C",
       addressLine1: "4 Grainger Street", postalCode: "NE1 5JQ",
       email: "alan.pettifer@example.com", mobile: "07700 900101",
@@ -1637,7 +1637,6 @@
     {
       label: "Dev Ramanathan — self-employed, no employer",
       outcome: "CONSENT", reportKind: "SELF_EMPLOYED",
-      journey: "RESIDENTIAL",
       firstName: "Dev", lastName: "Ramanathan", dob: "1990-06-21", niNumber: "QQ123458C",
       addressLine1: "9 Pilgrim Street", postalCode: "NE1 6QE",
       email: "dev.ramanathan@example.com", mobile: "07700 900103",
@@ -1647,7 +1646,6 @@
     {
       label: "Josie Hartnell — no match anywhere",
       outcome: "NO_RECORD",
-      journey: "RESIDENTIAL",
       firstName: "Josie", lastName: "Hartnell", dob: "1996-02-09", niNumber: "QQ123459C",
       addressLine1: "22 Dean Street", postalCode: "NE1 1PG",
       email: "josie.hartnell@example.com", mobile: "07700 900104",
@@ -1657,7 +1655,6 @@
     {
       label: "Imran Chaudhary — commercial",
       outcome: "CONSENT", reportKind: "COMMERCIAL",
-      journey: "COMMERCIAL",
       firstName: "Imran", lastName: "Chaudhary", dob: "1977-05-19", niNumber: "QQ123461C",
       addressLine1: "8 Westgate Road", postalCode: "NE1 4SG",
       email: "imran.chaudhary@example.com", mobile: "07700 900105",
@@ -1667,7 +1664,6 @@
     {
       label: "Rosalind Whitaker — residential and commercial",
       outcome: "CONSENT", reportKind: "RESIDENTIAL_AND_COMMERCIAL",
-      journey: "BOTH",
       firstName: "Rosalind", lastName: "Whitaker", dob: "1988-12-03", niNumber: "QQ123462C",
       addressLine1: "47 Grey Street", postalCode: "NE1 6EE",
       email: "rosalind.whitaker@example.com", mobile: "07700 900106",
@@ -1691,43 +1687,38 @@
   // cannot be mistaken for a real consent link if the screen is photographed.
   // The real one comes back from the provider as
   // additionalVerificationDetails.externalVerificationUrlForVerificationSubject.
-  function mockConsentUrl(order, leg) {
-    const path = leg === "COMMERCIAL" ? "company" : "individual";
-    return "https://verify.click2check.example/" + path + "/" + order.transactionNumber;
+  function mockConsentUrl(order) {
+    return "https://verify.click2check.example/individual/" + order.transactionNumber;
   }
 
-  // Which authorisations a journey needs before the case can move on.
-  function legsFor(order) {
-    const journey = order.journey || "RESIDENTIAL";
-    if (journey === "COMMERCIAL") return ["COMMERCIAL"];
-    if (journey === "BOTH") return ["RESIDENTIAL", "COMMERCIAL"];
-    return ["RESIDENTIAL"];
-  }
-
-  const LEG_COPY = {
-    RESIDENTIAL: {
-      cta: "Confirm your income with HMRC",
-      title: "The personal link",
-      accountLabel: "Gateway Account — Personal",
-      heading: "Sign in to your Government Gateway account",
-      lede: "HMRC need to know it is you before releasing your employment and income record.",
-      idLabel: "Government Gateway user ID",
-      scope: "Approving this lets HMRC share your employment, income and tax records with Click2Check. It does not give access to anything else.",
-    },
-    COMMERCIAL: {
-      cta: "Confirm your company income with HMRC",
-      title: "The commercial link",
-      accountLabel: "Gateway Account — Commercial",
-      heading: "Sign in to your organisation's Government Gateway account",
-      lede: "A company's records sit behind its own Government Gateway account, not the director's personal one. That is why this is a separate link.",
-      idLabel: "Organisation Government Gateway user ID",
-      // Deliberately the same records as the personal link, because it is the
-      // same order and the same response. This used to promise "dividends,
-      // shareholdings and tax records" -- naming two things HMRC do not return
-      // through this product, in the consent wording, which is the worst place
-      // to overstate what is being collected.
-      scope: "Approving this lets HMRC share your income and tax records, including income taken from the company, with Click2Check. It does not give access to anything else.",
-    },
+  // One order, one person, one link.
+  //
+  // There used to be two: a personal link and a separate "company" one, on the
+  // reasoning that a company's HMRC records sit behind its own Government
+  // Gateway account. True of HMRC in general, and not something this product
+  // does. The order we send Equifax is a person and nothing else --
+  // nationalInsuranceNumber, firstName, lastName, dob, postcode (see the
+  // payload in orders/tasks.py). There is no company number, no company name,
+  // no field of any kind that identifies a business, so there is nothing for
+  // Equifax to issue a second link against and nowhere for a company record to
+  // come back in.
+  //
+  // What "Commercial" actually is: query_category on the order, which C2C set
+  // for their own billing and reporting. It is never sent to Equifax. The same
+  // check runs either way, and what differs is the person's own records -- a
+  // director has no payroll entry, so their income arrives as other income.
+  const CONSENT_COPY = {
+    cta: "Confirm your income with HMRC",
+    title: "Confirming your income with HMRC",
+    accountLabel: "Gateway Account — Personal",
+    heading: "Sign in to your Government Gateway account",
+    lede: "HMRC need to know it is you before releasing your income record.",
+    idLabel: "Government Gateway user ID",
+    // This used to promise "dividends, shareholdings and tax records" on the
+    // company link -- naming two things HMRC do not return through this
+    // product, in the consent wording, which is the worst place to overstate
+    // what is being collected.
+    scope: "Approving this lets HMRC share your employment, income and tax records with Click2Check. It does not give access to anything else.",
   };
 
   function simulateGetResult(order) {
@@ -2003,7 +1994,6 @@
     // never been held.
     created.demoOutcome = outcome;
     created.reportKind = chosen.reportKind;
-    created.journey = chosen.journey || "RESIDENTIAL";
     // The real API returns 201 with status PENDING, and the case is in the
     // client's list from that moment -- before the provider has been called at all.
     // Adding it only once the outcome was known meant PENDING was a state no
@@ -2039,15 +2029,11 @@
     // The common case the demo used to hide: HMRC hands back a consent link
     // and nothing further happens until the applicant acts on it.
     if (outcome === "CONSENT") {
-      // One link per journey. A director's company consent is a separate
-      // authorisation on a separate link, so somebody who is both employed and a
-      // director receives two and has to follow both.
+      // One link, because the order is one person. See CONSENT_COPY.
       currentOrder = {
         ...order,
         status: "AWAITING_CONSENT",
-        consentUrl: mockConsentUrl(order, "RESIDENTIAL"),
-        companyConsentUrl: mockConsentUrl(order, "COMMERCIAL"),
-        authorised: [],
+        consentUrl: mockConsentUrl(order),
       };
       updateCaseInPortal(currentOrder);
       openInbox(currentOrder);
@@ -2144,26 +2130,18 @@
       "Confirm your income for your application with " + CLIENT_NAME;
     document.getElementById("email-greeting").textContent = "Dear " + payload.firstName + ",";
 
-    const legs = legsFor(order);
-    const both = legs.length > 1;
     document.getElementById("email-intro").textContent =
       CLIENT_NAME + " has asked us to confirm your income as part of your "
       + PURPOSE_PHRASES[payload.identifyingPurpose] + ". HMRC can share that with us "
-      + "directly, but only with your permission."
-      + (both ? " There are two parts to confirm: your own income, and your company's." : "");
+      + "directly, but only with your permission.";
 
-    // One button per leg, each marked once it has been authorised, so an
-    // applicant who is both employed and a director can see what is left to do.
-    document.getElementById("email-links").innerHTML = legs.map(leg => {
-      const done = (order.authorised || []).includes(leg);
-      return `<p><button type="button" class="email-cta" data-leg="${leg}"${done ? " disabled" : ""}>`
-        + (done ? "✓ " + LEG_COPY[leg].cta + " — done" : LEG_COPY[leg].cta)
-        + "</button></p>";
-    }).join("");
+    // One link. A commercial case is the same personal check under a different
+    // billing label, so a director gets exactly this email too.
+    document.getElementById("email-links").innerHTML =
+      `<p><button type="button" class="email-cta">${CONSENT_COPY.cta}</button></p>`;
 
-    document.getElementById("email-links").querySelectorAll("button").forEach(b => {
-      b.addEventListener("click", () => openApplicantView(b.dataset.leg));
-    });
+    document.getElementById("email-links").querySelector("button")
+      .addEventListener("click", () => openApplicantView());
 
     // What they need before they start. An applicant who gets three screens in and
     // then discovers they cannot find their user ID abandons it, and an abandoned
@@ -2173,9 +2151,6 @@
       "Your <strong>Government Gateway password</strong>",
       "The <strong>phone or authenticator app</strong> you use for HMRC’s access codes, as HMRC will send you a code to type in",
     ];
-    if (legs.length > 1) {
-      needs.push("Your <strong>company’s</strong> Government Gateway user ID and password as well, which are separate from your own");
-    }
     needs.push("About five minutes, and your phone to hand for HMRC’s access code");
     document.getElementById("email-needs").innerHTML =
       needs.map(n => `<li>${n}</li>`).join("");
@@ -2192,7 +2167,6 @@
     inboxOrder = order;
     renderEmailBody(order);
 
-    const legs = legsFor(order);
     document.getElementById("inbox-account").textContent = order.payload.email;
 
     const reopening = !!keepOpen;
@@ -2334,17 +2308,12 @@
   document.getElementById("pd-consent-copy-btn").addEventListener(
     "click", () => copyLink("pd-consent-url", "pd-consent-copy-note"));
 
-  // Which leg the applicant is currently authorising.
-  let currentLeg = "RESIDENTIAL";
-
-  function openApplicantView(leg) {
+  function openApplicantView() {
     if (!currentOrder || currentOrder.status !== "AWAITING_CONSENT") return;
-    currentLeg = leg || legsFor(currentOrder)[0];
-    const copy = LEG_COPY[currentLeg];
+    const copy = CONSENT_COPY;
 
     document.getElementById("applicant-title").textContent = copy.title;
-    document.getElementById("applicant-address").textContent =
-      currentLeg === "COMMERCIAL" ? currentOrder.companyConsentUrl : currentOrder.consentUrl;
+    document.getElementById("applicant-address").textContent = currentOrder.consentUrl;
     document.getElementById("gov-account").textContent = copy.accountLabel;
     document.getElementById("gov-heading").textContent = copy.heading;
     document.getElementById("gov-lede").textContent = copy.lede;
@@ -2361,25 +2330,11 @@
 
   document.getElementById("applicant-authorise-btn").addEventListener("click", () => {
     if (!currentOrder || currentOrder.status !== "AWAITING_CONSENT") return;
-
-    const authorised = [...(currentOrder.authorised || [])];
-    if (!authorised.includes(currentLeg)) authorised.push(currentLeg);
-    currentOrder = { ...currentOrder, authorised };
-    updateCaseInPortal(currentOrder);
-
-    // A journey with two legs is not consented until both are. Back to the inbox
-    // for the other link, which is exactly what the applicant has to do.
-    const outstanding = legsFor(currentOrder).filter(l => !authorised.includes(l));
-    if (outstanding.length) {
-      openInbox(currentOrder, true);
-      return;
-    }
-
     proceedAfterConsent();
   });
 
-  // Consent given. Separate from the buttons, because it is reachable from every
-  // leg and those must not be copies that drift apart.
+  // Consent given. Kept separate from the button because the case detail reaches
+  // it too, and the two must not be copies that drift apart.
   async function proceedAfterConsent() {
     if (!currentOrder || currentOrder.status !== "AWAITING_CONSENT") return;
 
