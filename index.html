@@ -1061,16 +1061,6 @@
       <div id="r-other-income"></div>
     </div>
 
-    <div class="section" id="r-sec-dividends">
-      <h2>Dividends</h2>
-      <div id="r-dividends"></div>
-    </div>
-
-    <div class="section" id="r-sec-shares">
-      <h2>Shareholdings</h2>
-      <div id="r-shareholdings"></div>
-    </div>
-
     <div class="section" id="r-sec-taxes">
       <h2>Taxes Paid</h2>
       <div id="r-taxes-paid"></div>
@@ -1278,16 +1268,6 @@
       <div id="pd-other-income"></div>
     </div>
 
-    <div class="section" id="pd-sec-dividends">
-      <h2>Dividends</h2>
-      <div id="pd-dividends"></div>
-    </div>
-
-    <div class="section" id="pd-sec-shares">
-      <h2>Shareholdings</h2>
-      <div id="pd-shareholdings"></div>
-    </div>
-
     <div class="section" id="pd-sec-taxes">
       <h2>Taxes Paid</h2>
       <div id="pd-taxes-paid"></div>
@@ -1467,15 +1447,28 @@
   // self-assessment only, and they have given us nothing for the commercial
   // journey. Shaped the way a director's return reads, and labelled as
   // illustrative in the README so nobody mistakes them for observed data.
-  const FIXED_DIVIDENDS = [
-    { year: "2024-25", company: "Northgate Logistics Ltd", declared: 24000.00, taxPaid: 2025.00 },
-    { year: "2023-24", company: "Northgate Logistics Ltd", declared: 18000.00, taxPaid: 1350.00 },
-  ];
-
-  const FIXED_SHAREHOLDINGS = [
-    { company: "Northgate Logistics Ltd", companyNumber: "09876543", shareClass: "Ordinary", held: 60, since: "12-04-2019" },
-    { company: "Quayside Joinery Ltd", companyNumber: "11223344", shareClass: "Ordinary", held: 25, since: "03-09-2022" },
-  ];
+  // There were Dividends and Shareholdings tables here, and they were invented.
+  //
+  // One VOI order returns the same two things whichever journey it was raised
+  // under: payroll entries (apariResponse / instantResponse) and the annual
+  // income summaries. The summaries carry payrollYear, annualIncomeTax,
+  // annualNationalInsurance, annualStatePension, annualOtherPensionIncome,
+  // annualGrossOtherIncome and selfEmployments. That is the whole list --
+  // orders/services/retention.py enumerates it, because the retention
+  // allowlist has to name every field that exists.
+  //
+  // There is no dividends field and no shareholdings field anywhere in the
+  // response, and the gateway has no code for either. Shareholdings are
+  // Companies House data, not HMRC's at all. So the demo was showing a client
+  // two tables of data the product cannot return.
+  //
+  // A director's dividend income does arrive, but inside annualGrossOtherIncome
+  // -- "Other Sources of Income" -- because Equifax do not break it out. That
+  // is the honest way to show it, and it is what the commercial shape uses now.
+  //
+  // Still open, and recorded in the gateway README: whether Equifax have a
+  // separate commercial product that would return more than this. If they do,
+  // these tables come back -- with real field names behind them.
 
   const FIXED_TAXES_PAID = [
     { year: "2022-23", totalTax: 7525.80, totalNI: 6772.28 },
@@ -1517,16 +1510,19 @@
     // A director taking income from their own company. No payroll, because the
     // money arrives as dividends rather than wages, which is the whole reason
     // the commercial journey exists: a payroll lookup finds nothing.
+    //
+    // No self-employment either -- they are not a sole trader. What HMRC hold
+    // for them is the other-income side of the annual summaries, which is where
+    // dividend income lands, and the tax totals.
     COMMERCIAL: {
-      employers: [], selfEmployment: [], otherIncome: [],
+      employers: [], selfEmployment: [], otherIncome: FIXED_OTHER_INCOME,
       taxesPaid: FIXED_TAXES_PAID, retrieved: false,
-      dividends: FIXED_DIVIDENDS, shareholdings: FIXED_SHAREHOLDINGS,
     },
-    // Employed and a director. Both journeys, so both sets of figures.
+    // Employed and a director: a payroll record for the job, and other income
+    // for the dividends.
     RESIDENTIAL_AND_COMMERCIAL: {
       employers: FIXED_EMPLOYERS, selfEmployment: [],
       otherIncome: FIXED_OTHER_INCOME, taxesPaid: FIXED_TAXES_PAID, retrieved: true,
-      dividends: FIXED_DIVIDENDS, shareholdings: FIXED_SHAREHOLDINGS,
     },
   };
 
@@ -1537,8 +1533,6 @@
       selfEmployment: shape.selfEmployment,
       otherIncome: shape.otherIncome,
       taxesPaid: shape.taxesPaid,
-      dividends: shape.dividends || [],
-      shareholdings: shape.shareholdings || [],
       retrievedName: shape.retrieved ? payload.firstName + " L " + payload.lastName : null,
       retrievedAddress: shape.retrieved
         ? "Apartment " + payload.addressLine1 + ", " + payload.postalCode : null,
@@ -1562,8 +1556,6 @@
       "sec-payroll": report.employers.length > 0,
       "sec-self-employment": report.selfEmployment.length > 0,
       "sec-other-income": report.otherIncome.length > 0,
-      "sec-dividends": (report.dividends || []).length > 0,
-      "sec-shares": (report.shareholdings || []).length > 0,
       "sec-taxes": report.taxesPaid.length > 0,
     };
   }
@@ -1588,12 +1580,14 @@
   // payroll entries are PAYE, the annual summaries are self assessment.
   function reportBasis(report) {
     return {
+      // apariResponse / instantResponse: the payroll entries.
       payroll: report.employers.length > 0,
-      // Self-employment profit and dividends are both declared on a return.
-      // Other income (state pension and the like) is not, so it does not make a
-      // document an SA302 on its own -- a pensioner on PAYE is still PAYE.
+      // The annual income summaries, which are the non-payroll side of what
+      // HMRC hold: self-employment turnover and profit, and other income.
+      // A director's dividends arrive here, under other income, because
+      // Equifax do not expose a dividends field to break them out of it.
       selfAssessment: (report.selfEmployment || []).length > 0
-        || (report.dividends || []).length > 0,
+        || (report.otherIncome || []).length > 0,
     };
   }
 
@@ -1727,7 +1721,12 @@
       heading: "Sign in to your organisation's Government Gateway account",
       lede: "A company's records sit behind its own Government Gateway account, not the director's personal one. That is why this is a separate link.",
       idLabel: "Organisation Government Gateway user ID",
-      scope: "Approving this lets HMRC share the company's dividends, shareholdings and tax records with Click2Check.",
+      // Deliberately the same records as the personal link, because it is the
+      // same order and the same response. This used to promise "dividends,
+      // shareholdings and tax records" -- naming two things HMRC do not return
+      // through this product, in the consent wording, which is the worst place
+      // to overstate what is being collected.
+      scope: "Approving this lets HMRC share your income and tax records, including income taken from the company, with Click2Check. It does not give access to anything else.",
     },
   };
 
@@ -1869,8 +1868,8 @@
     }
 
     // One helper for the five tabular sections, instead of the same twenty
-    // lines five times. The repetition is what let Dividends and Shareholdings
-    // be forgotten here while they rendered perfectly well on the page.
+    // lines five times. The repetition is what let whole sections be forgotten
+    // here while they rendered perfectly well on the page.
     function tableSection(key, heading, head, rows) {
       if (!show[key]) return;
       ensureSpace(60);
@@ -1898,20 +1897,6 @@
       "sec-other-income", "Other Sources of Income",
       ["Year", "State Pension", "Other Pensionable Income", "Other Income"],
       order.report.otherIncome.map(o => [o.year, money(o.statePension), money(o.otherPensionable), money(o.otherIncome)]),
-    );
-
-    // The two the commercial journey turns on, and the two the PDF did not have
-    // at all: a director's whole income was missing from their own document.
-    tableSection(
-      "sec-dividends", "Dividends",
-      ["Year", "Company", "Dividends Declared", "Tax Paid"],
-      (order.report.dividends || []).map(d => [d.year, d.company, money(d.declared), money(d.taxPaid)]),
-    );
-
-    tableSection(
-      "sec-shares", "Shareholdings",
-      ["Company", "Company Number", "Share Class", "Holding", "Held Since"],
-      (order.report.shareholdings || []).map(s => [s.company, s.companyNumber, s.shareClass, s.held + "%", s.since]),
     );
 
     tableSection(
@@ -2284,28 +2269,6 @@
     `;
   }
 
-  function renderDividendsHtml(items) {
-    return `
-      <div class="table-scroll"><table>
-        <thead><tr><th>Year</th><th>Company</th><th>Dividends Declared</th><th>Tax Paid</th></tr></thead>
-        <tbody>${items.map(d =>
-          `<tr><td>${d.year}</td><td>${d.company}</td><td>£${d.declared.toLocaleString()}</td><td>£${d.taxPaid.toLocaleString()}</td></tr>`
-        ).join("")}</tbody>
-      </table></div>
-    `;
-  }
-
-  function renderShareholdingsHtml(items) {
-    return `
-      <div class="table-scroll"><table>
-        <thead><tr><th>Company</th><th>Company Number</th><th>Share Class</th><th>Holding</th><th>Held Since</th></tr></thead>
-        <tbody>${items.map(s =>
-          `<tr><td>${s.company}</td><td class="mono">${s.companyNumber}</td><td>${s.shareClass}</td><td>${s.held}%</td><td>${s.since}</td></tr>`
-        ).join("")}</tbody>
-      </table></div>
-    `;
-  }
-
   function renderResult(order) {
     const { payload, report } = order;
     document.getElementById("result-case-id").textContent = "Case · " + order.transactionNumber.slice(0, 8);
@@ -2325,8 +2288,6 @@
     document.getElementById("r-payroll-employers").innerHTML = renderPayrollEmployersHtml(report);
     document.getElementById("r-self-employment").innerHTML = renderSelfEmploymentHtml(report.selfEmployment);
     document.getElementById("r-other-income").innerHTML = renderOtherIncomeHtml(report.otherIncome);
-    document.getElementById("r-dividends").innerHTML = renderDividendsHtml(report.dividends || []);
-    document.getElementById("r-shareholdings").innerHTML = renderShareholdingsHtml(report.shareholdings || []);
     document.getElementById("r-taxes-paid").innerHTML = renderTaxesPaidHtml(report.taxesPaid);
   }
 
@@ -2903,8 +2864,6 @@
     document.getElementById("pd-payroll-employers").innerHTML = renderPayrollEmployersHtml(report);
     document.getElementById("pd-self-employment").innerHTML = renderSelfEmploymentHtml(report.selfEmployment);
     document.getElementById("pd-other-income").innerHTML = renderOtherIncomeHtml(report.otherIncome);
-    document.getElementById("pd-dividends").innerHTML = renderDividendsHtml(report.dividends || []);
-    document.getElementById("pd-shareholdings").innerHTML = renderShareholdingsHtml(report.shareholdings || []);
     document.getElementById("pd-taxes-paid").innerHTML = renderTaxesPaidHtml(report.taxesPaid);
 
     document.getElementById("pd-refnum").textContent = payload.customerReference || "-";
