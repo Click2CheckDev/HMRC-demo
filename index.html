@@ -175,6 +175,14 @@
   }
 
   .section { margin-bottom: 26px; }
+  /* The document's own heading in the case-detail panel. Bigger than a section
+     heading and with no rule under it, so it reads as the title of the thing
+     rather than as the first of its sections. */
+  .doc-title {
+    font-family: var(--font-display); font-size: 22px; font-weight: 500;
+    color: var(--brand); margin: 0 0 20px; line-height: 1.25;
+  }
+  .doc-title-demo { color: var(--muted); font-size: 0.55em; font-weight: 400; }
   .section h2 {
     font-family: var(--font-display); font-size: 16px; font-weight: 500; color: var(--brand);
     margin: 0 0 12px; border-bottom: 1px solid var(--border); padding-bottom: 8px;
@@ -994,7 +1002,8 @@
     </div>
 
     <div class="eyebrow muted" id="result-case-id"></div>
-    <h1 class="title">Employment Income Verification <span style="color:var(--muted); font-size:0.5em; font-weight:400;">(DEMO)</span></h1>
+    <!-- Named from the report's contents, not hardcoded -- see documentTitle. -->
+    <h1 class="title"><span id="r-doc-title"></span> <span style="color:var(--muted); font-size:0.5em; font-weight:400;">(DEMO)</span></h1>
 
     <div class="section">
       <h2>Order Information</h2>
@@ -1189,6 +1198,10 @@
     </div>
 
     <div id="pd-report-panel" class="hidden">
+    <!-- The same heading the result screen and the PDF carry. This panel had no
+         document title at all, so the downloaded file announced itself as
+         something the page it came from never named. -->
+    <h2 class="doc-title"><span id="pd-doc-title"></span> <span class="doc-title-demo">(DEMO)</span></h2>
     <div class="section">
       <h2>Order Information</h2>
       <div class="row"><span class="label">Report Date</span><span class="value" id="pd-report-date"></span></div>
@@ -1500,8 +1513,15 @@
   // so an empty section does not appear at all -- heading included. A heading
   // over an empty table reads as missing data; a section that is absent reads as
   // not applicable, which is what it is.
-  function applyReportSections(prefix, report) {
-    const visible = {
+  //
+  // Returned rather than applied directly because the PDF needs the same answer.
+  // It used to decide for itself, and printed every heading unconditionally --
+  // so a commercial case showed five sections on screen and downloaded a file
+  // with nine, four of them empty headings over empty tables, including a
+  // "Payroll HMRC Data" section for someone with no payroll record at all.
+  // The page and the file have to be the same document.
+  function sectionVisibility(report) {
+    return {
       "sec-retrieved": !!(report.retrievedName || report.retrievedAddress),
       "sec-payroll": report.employers.length > 0,
       "sec-self-employment": report.selfEmployment.length > 0,
@@ -1510,10 +1530,51 @@
       "sec-shares": (report.shareholdings || []).length > 0,
       "sec-taxes": report.taxesPaid.length > 0,
     };
-    Object.entries(visible).forEach(([sec, on]) => {
+  }
+
+  function applyReportSections(prefix, report) {
+    Object.entries(sectionVisibility(report)).forEach(([sec, on]) => {
       const el = document.getElementById(prefix + "-" + sec);
       if (el) el.classList.toggle("hidden", !on);
     });
+  }
+
+  // What HMRC actually hold for this person, which is what the document is.
+  //
+  // Payroll and self assessment are two different records and two different
+  // documents. A director taking their income as dividends has no payroll entry
+  // at all -- that is the whole reason the commercial journey exists -- so
+  // heading their document "Employment Income Verification" describes a record
+  // that does not exist in it. What evidences their income is their self
+  // assessment, the SA302.
+  //
+  // Same split the affordability service uses (HmrcScope.PAYE / SA302 / BOTH):
+  // payroll entries are PAYE, the annual summaries are self assessment.
+  function reportBasis(report) {
+    return {
+      payroll: report.employers.length > 0,
+      // Self-employment profit and dividends are both declared on a return.
+      // Other income (state pension and the like) is not, so it does not make a
+      // document an SA302 on its own -- a pensioner on PAYE is still PAYE.
+      selfAssessment: (report.selfEmployment || []).length > 0
+        || (report.dividends || []).length > 0,
+    };
+  }
+
+  function documentTitle(report) {
+    const { payroll, selfAssessment } = reportBasis(report);
+    if (payroll && selfAssessment) return "Employment and Self Assessment Income Verification";
+    if (selfAssessment) return "Self Assessment Income Verification (SA302)";
+    if (payroll) return "Employment Income Verification";
+    // A delivered report with neither should not happen, but naming it after a
+    // record it does not contain is how this went wrong the first time.
+    return "HMRC Income Verification";
+  }
+
+  // Sets the document's heading, in the page and in the PDF, from one function.
+  function applyDocumentTitle(id, report) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = documentTitle(report);
   }
 
   // The test identities. Each one's outcome is a property of their records
@@ -1665,9 +1726,18 @@
       y += 10;
     }
 
+    // Same two functions the page uses, so the file cannot describe a different
+    // document from the screen it was downloaded from.
+    const show = sectionVisibility(order.report);
+
     doc.setFont("helvetica", "bold"); doc.setFontSize(20); doc.setTextColor(BRAND);
-    doc.text("Employment Income Verification (DEMO)", marginX, y);
-    y += 28;
+    // split, because "Employment and Self Assessment Income Verification (DEMO)"
+    // runs off the side of an A4 page as one line.
+    const titleLines = doc.splitTextToSize(
+      documentTitle(order.report) + " (DEMO)", doc.internal.pageSize.getWidth() - marginX * 2
+    );
+    doc.text(titleLines, marginX, y);
+    y += 20 * titleLines.length + 8;
 
     const purposeLabel = PURPOSE_LABELS[order.payload.identifyingPurpose] || order.payload.identifyingPurpose;
 
@@ -1704,18 +1774,25 @@
     });
     y = doc.lastAutoTable.finalY + 22;
 
-    sectionHeading("Retrieved Personal Information");
-    doc.autoTable({
-      startY: y, theme: "grid",
-      styles: { font: "helvetica", fontSize: 9, textColor: INK, lineColor: BORDER },
-      margin: { left: marginX, right: marginX },
-      body: [
-        ["Name", order.report.retrievedName],
-        ["Address", order.report.retrievedAddress],
-      ],
-    });
-    y = doc.lastAutoTable.finalY + 22;
+    // Only when HMRC returned a name or address. A self-employed or commercial
+    // report has no employeeInformation to take them from, so this section
+    // previously printed two blank rows -- which reads as "HMRC could not
+    // confirm who they are", rather than "we never asked payroll".
+    if (show["sec-retrieved"]) {
+      sectionHeading("Retrieved Personal Information");
+      doc.autoTable({
+        startY: y, theme: "grid",
+        styles: { font: "helvetica", fontSize: 9, textColor: INK, lineColor: BORDER },
+        margin: { left: marginX, right: marginX },
+        body: [
+          ["Name", order.report.retrievedName || "-"],
+          ["Address", order.report.retrievedAddress || "-"],
+        ],
+      });
+      y = doc.lastAutoTable.finalY + 22;
+    }
 
+    if (show["sec-payroll"]) {
     sectionHeading("Payroll HMRC Data");
 
     order.report.employers.forEach(entry => {
@@ -1753,42 +1830,59 @@
       );
       y += 26;
     });
+    }
 
-    ensureSpace(60);
-    sectionHeading("Self-Employment Income");
-    doc.autoTable({
-      startY: y, theme: "grid",
-      head: [["Year", "Business Name", "Turnover", "Resulting Profit or Loss"]],
-      body: order.report.selfEmployment.map(s => [s.year, s.business, "£" + s.turnover.toLocaleString(), "£" + s.resultingProfitOrLoss.toLocaleString()]),
-      styles: { font: "helvetica", fontSize: 9, textColor: INK, lineColor: BORDER },
-      headStyles: { fillColor: LIGHT_ROW, textColor: INK, fontStyle: "bold" },
-      margin: { left: marginX, right: marginX },
-    });
-    y = doc.lastAutoTable.finalY + 22;
+    // One helper for the five tabular sections, instead of the same twenty
+    // lines five times. The repetition is what let Dividends and Shareholdings
+    // be forgotten here while they rendered perfectly well on the page.
+    function tableSection(key, heading, head, rows) {
+      if (!show[key]) return;
+      ensureSpace(60);
+      sectionHeading(heading);
+      doc.autoTable({
+        startY: y, theme: "grid",
+        head: [head],
+        body: rows,
+        styles: { font: "helvetica", fontSize: 9, textColor: INK, lineColor: BORDER },
+        headStyles: { fillColor: LIGHT_ROW, textColor: INK, fontStyle: "bold" },
+        margin: { left: marginX, right: marginX },
+      });
+      y = doc.lastAutoTable.finalY + 22;
+    }
 
-    ensureSpace(60);
-    sectionHeading("Other Sources of Income");
-    doc.autoTable({
-      startY: y, theme: "grid",
-      head: [["Year", "State Pension", "Other Pensionable Income", "Other Income"]],
-      body: order.report.otherIncome.map(o => [o.year, "£" + o.statePension.toLocaleString(), "£" + o.otherPensionable.toLocaleString(), "£" + o.otherIncome.toLocaleString()]),
-      styles: { font: "helvetica", fontSize: 9, textColor: INK, lineColor: BORDER },
-      headStyles: { fillColor: LIGHT_ROW, textColor: INK, fontStyle: "bold" },
-      margin: { left: marginX, right: marginX },
-    });
-    y = doc.lastAutoTable.finalY + 22;
+    const money = (n) => "£" + n.toLocaleString();
 
-    ensureSpace(60);
-    sectionHeading("Taxes Paid");
-    doc.autoTable({
-      startY: y, theme: "grid",
-      head: [["Year", "Total Annual Tax Deduction", "Total Annual National Insurance Deduction"]],
-      body: order.report.taxesPaid.map(t => [t.year, "£" + t.totalTax.toLocaleString(), "£" + t.totalNI.toLocaleString()]),
-      styles: { font: "helvetica", fontSize: 9, textColor: INK, lineColor: BORDER },
-      headStyles: { fillColor: LIGHT_ROW, textColor: INK, fontStyle: "bold" },
-      margin: { left: marginX, right: marginX },
-    });
-    y = doc.lastAutoTable.finalY + 22;
+    tableSection(
+      "sec-self-employment", "Self-Employment Income",
+      ["Year", "Business Name", "Turnover", "Resulting Profit or Loss"],
+      order.report.selfEmployment.map(s => [s.year, s.business, money(s.turnover), money(s.resultingProfitOrLoss)]),
+    );
+
+    tableSection(
+      "sec-other-income", "Other Sources of Income",
+      ["Year", "State Pension", "Other Pensionable Income", "Other Income"],
+      order.report.otherIncome.map(o => [o.year, money(o.statePension), money(o.otherPensionable), money(o.otherIncome)]),
+    );
+
+    // The two the commercial journey turns on, and the two the PDF did not have
+    // at all: a director's whole income was missing from their own document.
+    tableSection(
+      "sec-dividends", "Dividends",
+      ["Year", "Company", "Dividends Declared", "Tax Paid"],
+      (order.report.dividends || []).map(d => [d.year, d.company, money(d.declared), money(d.taxPaid)]),
+    );
+
+    tableSection(
+      "sec-shares", "Shareholdings",
+      ["Company", "Company Number", "Share Class", "Holding", "Held Since"],
+      (order.report.shareholdings || []).map(s => [s.company, s.companyNumber, s.shareClass, s.held + "%", s.since]),
+    );
+
+    tableSection(
+      "sec-taxes", "Taxes Paid",
+      ["Year", "Total Annual Tax Deduction", "Total Annual National Insurance Deduction"],
+      order.report.taxesPaid.map(t => [t.year, money(t.totalTax), money(t.totalNI)]),
+    );
 
     ensureSpace(40);
     doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(BRAND);
@@ -2189,6 +2283,7 @@
     document.getElementById("r-employer").textContent = payload.employerName || "-";
     document.getElementById("r-retrieved-name").textContent = report.retrievedName || "-";
     document.getElementById("r-retrieved-address").textContent = report.retrievedAddress || "-";
+    applyDocumentTitle("r-doc-title", report);
     applyReportSections("r", report);
 
     document.getElementById("r-payroll-employers").innerHTML = renderPayrollEmployersHtml(report);
@@ -2781,6 +2876,7 @@
 
     document.getElementById("pd-refnum").textContent = payload.customerReference || "-";
     document.getElementById("pd-employer").textContent = payload.employerName || "-";
+    applyDocumentTitle("pd-doc-title", report);
     applyReportSections("pd", report);
     document.getElementById("pd-download-btn").onclick = () => downloadReportPdf(order);
   }
