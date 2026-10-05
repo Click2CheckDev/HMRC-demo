@@ -547,6 +547,22 @@
   .panel code { font-family: var(--font-mono); font-size: 12px; color: var(--brand-ink); word-break: break-all; }
   .panel .note { font-size: 11.5px; color: var(--muted); font-style: italic; }
 
+  /* Demo-only shortcuts, fenced off from the real portal actions. Both sat in
+     one row as identical buttons, so "Refresh status" and "Simulate the
+     applicant consenting" read as equally real features of the product. */
+  .demo-controls {
+    margin-top: 18px; padding-top: 14px; border-top: 1px dashed var(--border);
+  }
+  .demo-controls-label {
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--muted); font-weight: 600;
+  }
+  .demo-controls .note { margin: 4px 0 0; }
+  /* .btn-primary is width:100% because it is built for form submits. Left
+     alone, a demo shortcut became the loudest thing on the panel -- louder
+     than "Check for an update now", which is the real action. */
+  .demo-controls .btn-primary { width: auto; }
+
   .filter-row { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; font-size: 13px; }
   .filter-row label { color: var(--muted); }
   .filter-row select { font: inherit; font-size: 13px; padding: 6px 10px; border-radius: 3px; border: 1px solid var(--border-strong); background: var(--surface); }
@@ -1108,7 +1124,7 @@
         <tr><th>Applicant</th><th>Category</th><th>Status</th><th>Tracking Number</th><th>Opened</th></tr>
       </thead>
       <tbody id="portal-case-list"></tbody>
-    </table></div>
+    </table>
   </div>
 
   <!-- CLIENT PORTAL: single case detail (reuses the report layout) -->
@@ -1143,12 +1159,27 @@
         </span>
       </p>
       <p id="pd-pending-detail" class="note"></p>
+
+      <!-- The one real action on a waiting case. Kept apart from the demo
+           shortcuts below, which previously sat in the same row looking
+           identical -- so there was no way to tell which buttons are features
+           of the service and which are the demo skipping time forward. -->
       <div class="panel-actions">
-        <button class="btn-secondary" id="pd-refresh-btn">Refresh status</button>
-        <button class="btn-primary" id="pd-advance-btn">Simulate the review completing</button>
-        <button class="btn-primary" id="pd-consent-btn">Simulate the applicant consenting</button>
+        <button class="btn-secondary" id="pd-refresh-btn">Check for an update now</button>
       </div>
+      <p class="note" id="pd-refresh-help">Asks HMRC whether the applicant has finished yet. The service already
+        does this on its own, so this only asks sooner &mdash; it does not contact the applicant or chase them.</p>
       <p class="note" id="pd-refresh-note"></p>
+
+      <div class="demo-controls">
+        <div class="demo-controls-label">Demo controls</div>
+        <p class="note">These stand in for things that happen on their own in the live service, in their own time.
+          Nothing here is a button a client would have.</p>
+        <div class="panel-actions">
+          <button class="btn-primary" id="pd-advance-btn"></button>
+          <button class="btn-primary" id="pd-consent-btn">Jump ahead: the applicant authorises with HMRC</button>
+        </div>
+      </div>
 
       <!-- What HMRC's side reports back, in their own words. Worth showing because
            the values are not guessable and two of them are not in the written
@@ -1164,16 +1195,21 @@
     <!-- Automatic polling gave up. POST /orders/<id>/refresh/ restarts it, and
          only works on an expired order -- it 400s on anything else. -->
     <div class="panel danger hidden" id="pd-expired-panel">
-      <p>The consent window closed with no response from HMRC. Resume checking manually if you still expect this case to complete.</p>
+      <p>The consent link expired before the applicant authorised, so this case was closed.</p>
+      <p class="note">Checking again asks HMRC once more, in case the applicant finished right at the end and the
+        result arrived too late to be picked up. It does not reopen the link or send the applicant a new one &mdash;
+        if they still want to proceed, raise a new case.</p>
       <div class="panel-actions">
-        <button class="btn-secondary" id="pd-resume-btn">Resume checking</button>
+        <button class="btn-secondary" id="pd-resume-btn">Check once more</button>
       </div>
     </div>
 
     <div class="panel danger hidden" id="pd-failed-panel">
       <p id="pd-failed-text"></p>
+      <p class="note">Most failures are a mistyped National Insurance number or date of birth. This opens a new
+        case with the same details already filled in, so they can be corrected rather than retyped.</p>
       <div class="panel-actions">
-        <button class="btn-secondary" id="pd-failed-new-btn">Start a corrected case</button>
+        <button class="btn-secondary" id="pd-failed-new-btn">Correct the details and try again</button>
       </div>
     </div>
 
@@ -1324,7 +1360,7 @@
         <tr><th>When</th><th>Case</th><th>Who</th><th>Why</th><th>Trigger</th><th>Batch</th></tr>
       </thead>
       <tbody id="ret-audit-list"></tbody>
-    </table></div>
+    </table>
   </div>
 
 </main>
@@ -1625,7 +1661,7 @@
       verificationType: "VOE", identifyingPurpose: "ES",
     },
     {
-      label: "Imran Chaudhary — commercial, director of his own company",
+      label: "Imran Chaudhary — commercial",
       outcome: "CONSENT", reportKind: "COMMERCIAL",
       journey: "COMMERCIAL",
       firstName: "Imran", lastName: "Chaudhary", dob: "1977-05-19", niNumber: "QQ123461C",
@@ -2594,7 +2630,6 @@
       });
       count++;
     });
-    saveCasesToStorage();
     return { count, batch };
   }
 
@@ -2651,33 +2686,25 @@
     });
   }
 
+  // Cases last for the visit, and no longer.
+  //
+  // They used to persist in localStorage, which meant every run of the demo
+  // left its test cases behind and the list grew without limit -- a reviewer
+  // opening it found hundreds of other people's attempts above the ones that
+  // are meant to be there. A refresh is now the reset, which is what anyone
+  // poking at a demo expects a refresh to do.
+  //
+  // The key is cleared rather than just ignored, so anyone who has already
+  // accumulated a pile gets rid of it by loading the page once.
   const STORAGE_KEY = "c2c_demo_cases";
-
-  function loadSavedCases() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) : [];
-    } catch (e) {
-      console.warn("Could not read saved cases from localStorage:", e);
-      return [];
-    }
-  }
-
-  function saveCasesToStorage() {
-    try {
-      // Only persist cases created through the form (not the base mock
-      // set), identified by the __isSaved flag set when a case is added.
-      const toSave = portalCases.filter(c => c.__isSaved);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
-    } catch (e) {
-      console.warn("Could not save case to localStorage:", e);
-    }
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch (e) {
+    // Private browsing, or storage disabled. Nothing to clean up in that case.
   }
 
   function addCaseToPortal(order) {
-    const saved = { ...order, __isSaved: true };
-    portalCases.unshift(saved);
-    saveCasesToStorage();
+    portalCases.unshift({ ...order });
   }
 
   // A case is now added while it is still awaiting consent and finished later,
@@ -2688,12 +2715,10 @@
       addCaseToPortal(order);
       return;
     }
-    portalCases[idx] = { ...order, __isSaved: true };
-    saveCasesToStorage();
+    portalCases[idx] = { ...order };
   }
 
-  // Saved cases (from a previous visit) show first, then the built-in demo cases.
-  const portalCases = [...loadSavedCases(), ...buildMockCaseList()];
+  const portalCases = buildMockCaseList();
 
   function renderPortalList() {
     // The totals are the whole account, not the filtered view -- they stand in
@@ -2825,11 +2850,19 @@
 
       // And only offer to advance a case that has not been submitted.
       const advance = document.getElementById("pd-advance-btn");
-      advance.classList.toggle("hidden", status !== "PENDING");
-      advance.textContent = "Simulate the worker picking it up";
+      const canAdvance = status === "PENDING";
+      advance.classList.toggle("hidden", !canAdvance);
+      advance.textContent = "Jump ahead: send this case to HMRC";
 
       // Refresh is only meaningful once something is being checked.
-      document.getElementById("pd-refresh-btn").classList.toggle("hidden", status === "PENDING");
+      const canRefresh = status !== "PENDING";
+      document.getElementById("pd-refresh-btn").classList.toggle("hidden", !canRefresh);
+      document.getElementById("pd-refresh-help").classList.toggle("hidden", !canRefresh);
+
+      // Hide the whole demo block when neither shortcut applies, rather than
+      // leaving a labelled empty box -- a case being polled has nothing to skip.
+      document.querySelector(".demo-controls")
+        .classList.toggle("hidden", !canAdvance && !wantsConsent);
 
       pending.classList.remove("hidden");
     } else if (status === "EXPIRED") {
