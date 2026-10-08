@@ -1692,7 +1692,9 @@
   const DEMO_APPLICANTS = [
     {
       label: "Marcy Okonjo — PAYE, needs HMRC consent",
-      outcome: "CONSENT", reportKind: "MIXED",
+      // PAYE only, as the label says: employed, no Self Assessment return. This
+      // was MIXED, so the usual case showed self-employment and an SA302 title.
+      outcome: "CONSENT", reportKind: "PAYE_ONLY",
       firstName: "Marcy", lastName: "Okonjo", dob: "1985-03-14", niNumber: "QQ123456C",
       addressLine1: "12 Quayside", postalCode: "NE1 1AQ",
       email: "marcy.okonjo@example.com", mobile: "07700 900102",
