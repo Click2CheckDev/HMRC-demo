@@ -806,6 +806,14 @@
         <input id="employerName" />
         <span class="field-hint">What the applicant says. The report shows it beside what HMRC's records actually hold.</span>
       </div>
+      <div class="field">
+        <label>Work email <span style="font-weight:400; color:var(--muted);">(optional)</span></label>
+        <input id="workEmail" type="email" />
+      </div>
+      <div class="field">
+        <label>Work phone number <span style="font-weight:400; color:var(--muted);">(optional)</span></label>
+        <input id="workPhone" type="tel" />
+      </div>
     </div>
 
     <!-- AUTHORISATION
@@ -1038,8 +1046,8 @@
       <div class="row"><span class="label">Date of Birth</span><span class="value" id="r-dob"></span></div>
       <div class="row"><span class="label">Address</span><span class="value" id="r-address"></span></div>
       <div class="row"><span class="label">Current Employment -- Employer Name</span><span class="value" id="r-employer">-</span></div>
-      <div class="row"><span class="label">Current Employment -- Work Email</span><span class="value">-</span></div>
-      <div class="row"><span class="label">Current Employment -- Work Phone Number</span><span class="value">-</span></div>
+      <div class="row"><span class="label">Current Employment -- Work Email</span><span class="value" id="r-work-email">-</span></div>
+      <div class="row"><span class="label">Current Employment -- Work Phone Number</span><span class="value" id="r-work-phone">-</span></div>
     </div>
 
     <div class="section" id="r-sec-retrieved">
@@ -1063,9 +1071,29 @@
       <div id="r-other-income"></div>
     </div>
 
+    <div class="section" id="r-sec-interest-dividends">
+      <h2>Interest and Dividends</h2>
+      <div id="r-interest-dividends"></div>
+    </div>
+
+    <div class="section" id="r-sec-property">
+      <h2>UK Property Income</h2>
+      <div id="r-property"></div>
+    </div>
+
+    <div class="section" id="r-sec-holiday-lettings">
+      <h2>Furnished Holiday Lettings</h2>
+      <div id="r-holiday-lettings"></div>
+    </div>
+
     <div class="section" id="r-sec-taxes">
       <h2>Taxes Paid</h2>
       <div id="r-taxes-paid"></div>
+    </div>
+
+    <div class="section" id="r-sec-tax-position">
+      <h2>Self Assessment Tax Position</h2>
+      <div id="r-tax-position"></div>
     </div>
 
     <p class="disclaimer">This is a DEMO document generated from fictional test data for review purposes only. It is not a real verification report and must not be used as evidence of income, employment, or identity.</p>
@@ -1245,8 +1273,8 @@
       <div class="row"><span class="label">Date of Birth</span><span class="value" id="pd-dob"></span></div>
       <div class="row"><span class="label">Address</span><span class="value" id="pd-address"></span></div>
       <div class="row"><span class="label">Current Employment -- Employer Name</span><span class="value" id="pd-employer">-</span></div>
-      <div class="row"><span class="label">Current Employment -- Work Email</span><span class="value">-</span></div>
-      <div class="row"><span class="label">Current Employment -- Work Phone Number</span><span class="value">-</span></div>
+      <div class="row"><span class="label">Current Employment -- Work Email</span><span class="value" id="pd-work-email">-</span></div>
+      <div class="row"><span class="label">Current Employment -- Work Phone Number</span><span class="value" id="pd-work-phone">-</span></div>
     </div>
 
     <div class="section" id="pd-sec-retrieved">
@@ -1270,9 +1298,29 @@
       <div id="pd-other-income"></div>
     </div>
 
+    <div class="section" id="pd-sec-interest-dividends">
+      <h2>Interest and Dividends</h2>
+      <div id="pd-interest-dividends"></div>
+    </div>
+
+    <div class="section" id="pd-sec-property">
+      <h2>UK Property Income</h2>
+      <div id="pd-property"></div>
+    </div>
+
+    <div class="section" id="pd-sec-holiday-lettings">
+      <h2>Furnished Holiday Lettings</h2>
+      <div id="pd-holiday-lettings"></div>
+    </div>
+
     <div class="section" id="pd-sec-taxes">
       <h2>Taxes Paid</h2>
       <div id="pd-taxes-paid"></div>
+    </div>
+
+    <div class="section" id="pd-sec-tax-position">
+      <h2>Self Assessment Tax Position</h2>
+      <div id="pd-tax-position"></div>
     </div>
 
     <p class="disclaimer">This is a DEMO document generated from fictional test data for review purposes only. It is not a real verification report and must not be used as evidence of income, employment, or identity.</p>
@@ -1399,19 +1447,13 @@
         { period: "2023-24", taxableIncome: 38156.88, taxDeduction: 5115.40, niDeduction: 2786.77 },
         { period: "2022-23", taxableIncome: 7946.88, taxDeduction: 1170.00, niDeduction: 576.34 },
       ],
+      // The three most recent pay periods, and only for the current employment:
+      // what Equifax said a live report returns (8 October 2026). This listed
+      // twelve until then, which is more than the product delivers.
       payPeriod: [
         { payDate: "27-09-2024", taxableIncome: 3320.37, taxDeduction: 454.40, niDeduction: 176.33 },
         { payDate: "28-08-2024", taxableIncome: 3320.37, taxDeduction: 454.40, niDeduction: 176.33 },
         { payDate: "26-07-2024", taxableIncome: 3320.37, taxDeduction: 454.40, niDeduction: 176.33 },
-        { payDate: "28-06-2024", taxableIncome: 3320.37, taxDeduction: 454.40, niDeduction: 176.33 },
-        { payDate: "28-05-2024", taxableIncome: 3320.37, taxDeduction: 454.40, niDeduction: 176.33 },
-        { payDate: "26-04-2024", taxableIncome: 3320.37, taxDeduction: 454.40, niDeduction: 176.33 },
-        { payDate: "28-03-2024", taxableIncome: 3178.11, taxDeduction: 426.00, niDeduction: 206.41 },
-        { payDate: "28-02-2024", taxableIncome: 3178.11, taxDeduction: 425.80, niDeduction: 206.41 },
-        { payDate: "26-01-2024", taxableIncome: 3178.11, taxDeduction: 426.00, niDeduction: 206.41 },
-        { payDate: "28-12-2023", taxableIncome: 3178.11, taxDeduction: 426.00, niDeduction: 247.69 },
-        { payDate: "28-11-2023", taxableIncome: 3178.11, taxDeduction: 426.00, niDeduction: 247.69 },
-        { payDate: "27-10-2023", taxableIncome: 2895.19, taxDeduction: 369.40, niDeduction: 213.74 },
       ],
     },
     {
@@ -1434,8 +1476,8 @@
   ];
 
   const FIXED_SELF_EMPLOYMENT = [
-    { year: "2022-23", business: "Quayside Joinery", turnover: 28503.00, expenses: null, carriedForwardLosses: null, resultingProfitOrLoss: 28503.00 },
-    { year: "2021-22", business: "Tyne Valley Crafts", turnover: 31925.00, expenses: null, carriedForwardLosses: null, resultingProfitOrLoss: 31925.00 },
+    { year: "2022-23", business: "Quayside Joinery", turnover: 33363.00, expenses: 4210.00, carriedForwardLosses: 650.00, resultingProfitOrLoss: 28503.00 },
+    { year: "2021-22", business: "Tyne Valley Crafts", turnover: 38105.00, expenses: 5180.00, carriedForwardLosses: 1000.00, resultingProfitOrLoss: 31925.00 },
   ];
 
   const FIXED_OTHER_INCOME = [
@@ -1444,33 +1486,53 @@
     { year: "2020-21", statePension: 1427.89, otherPensionable: 1898.23, otherIncome: 5365.00 },
   ];
 
-  // Company-side figures. UNLIKE every other number in this file, these are
-  // invented: the data provider's sample report covers employment and
-  // self-assessment only, and they have given us nothing for the commercial
-  // category. Shaped the way a director's return reads, and labelled as
-  // illustrative in the README so nobody mistakes them for observed data.
-  // There were Dividends and Shareholdings tables here, and they were invented.
+  // A director's figures. Invented, like the rest of this file, but every field
+  // is one the real response carries: observed in the UAT commercial order of
+  // October 2026, and confirmed by Equifax on 8 October that a director's income
+  // appears under dividends. The demo removed a Dividends table on 5 October on
+  // the belief that no such field existed; it does, as
+  // interestAndDividends.ukCompanyDividends. What does not exist is any company
+  // data -- no company name against the dividend, and no shareholdings, which
+  // are Companies House records rather than HMRC's.
   //
-  // One VOI order returns the same two things whichever journey it was raised
-  // under: payroll entries (apariResponse / instantResponse) and the annual
-  // income summaries. The summaries carry payrollYear, annualIncomeTax,
-  // annualNationalInsurance, annualStatePension, annualOtherPensionIncome,
-  // annualGrossOtherIncome and selfEmployments. That is the whole list --
-  // orders/services/retention.py enumerates it, because the retention
-  // allowlist has to name every field that exists.
-  //
-  // There is no dividends field and no shareholdings field anywhere in the
-  // response, and the gateway has no code for either. Shareholdings are
-  // Companies House data, not HMRC's at all. So the demo was showing a client
-  // two tables of data the product cannot return.
-  //
-  // A director's dividend income does arrive, but inside annualGrossOtherIncome
-  // -- "Other Sources of Income" -- because Equifax do not break it out. That
-  // is the honest way to show it, and it is what the commercial shape uses now.
-  //
-  // Still open, and recorded in the gateway README: whether Equifax have a
-  // separate commercial product that would return more than this. If they do,
-  // these tables come back -- with real field names behind them.
+  // annualGrossOtherIncome is HMRC's total of interest, dividends and property
+  // profit, so the director's Other Income below is the sum of the three tables.
+  const FIXED_INTEREST_DIVIDENDS = [
+    { year: "2022-23", taxedInterest: 120.00, untaxedInterest: 85.00, ukDividends: 24000.00, otherDividends: 350.00 },
+    { year: "2021-22", taxedInterest: 95.00, untaxedInterest: 60.00, ukDividends: 18000.00, otherDividends: 280.00 },
+  ];
+
+  // Adjusted profit is rents less expenses less losses brought forward.
+  const FIXED_PROPERTY = [
+    { year: "2022-23", count: 1, rents: 9600.00, expenses: 1850.00, financeCosts: 2100.00, broughtForwardLoss: 500.00, profitOrLoss: 7250.00 },
+    { year: "2021-22", count: 1, rents: 9300.00, expenses: 1700.00, financeCosts: 2050.00, broughtForwardLoss: 900.00, profitOrLoss: 6700.00 },
+  ];
+
+  const FIXED_HOLIDAY_LETTINGS = [
+    { year: "2022-23", income: 6200.00, expenses: 2450.00, profitOrLoss: 3750.00 },
+    { year: "2021-22", income: 5800.00, expenses: 2300.00, profitOrLoss: 3500.00 },
+  ];
+
+  // Other Income is the sum of the interest, dividends, property and holiday
+  // letting tables above: 120 + 85 + 24,000 + 350 + 7,250 + 3,750 = 35,555 for
+  // 2022-23. The pensions are a director's private pension and a state pension
+  // drawn alongside it; neither is part of Other Income.
+  const FIXED_DIRECTOR_OTHER_INCOME = [
+    { year: "2022-23", statePension: 1567.90, otherPensionable: 2400.00, otherIncome: 35555.00 },
+    { year: "2021-22", statePension: 1456.00, otherPensionable: 2300.00, otherIncome: 28635.00 },
+  ];
+
+  // taxCalculationSummary.taxDueOrOverpaid. Equifax, 8 October 2026: positive is
+  // owed, negative is overpaid. One overpaid year so the demo shows both.
+  const FIXED_TAX_POSITION = [
+    { year: "2022-23", taxDueOrOverpaid: 1240.60 },
+    { year: "2021-22", taxDueOrOverpaid: -310.00 },
+  ];
+
+  const FIXED_DIRECTOR_TAX_POSITION = [
+    { year: "2022-23", taxDueOrOverpaid: 5320.00 },
+    { year: "2021-22", taxDueOrOverpaid: 3980.50 },
+  ];
 
   const FIXED_TAXES_PAID = [
     { year: "2022-23", totalTax: 7525.80, totalNI: 6772.28 },
@@ -1484,47 +1546,52 @@
   // No calculation anywhere -- just the fixed data above, plus the retrieved
   // name/address enrichment pattern the provider's own sample shows (middle initial
   // and an "Apartment" prefix added by the verification).
+  const NONE = { interestDividends: [], property: [], holidayLettings: [], taxPosition: [] };
+
+  // Every shape shows HMRC's record of the person. Equifax, 8 October 2026: a
+  // live report returns the identity of whoever signed in at the Government
+  // Gateway, self assessment only applicants included -- its absence from the
+  // UAT self-employed and commercial responses was incomplete test data.
   const REPORT_SHAPES = {
     // A plain PAYE applicant. HMRC hold payroll records and the tax totals and
-    // nothing else, so there is no self-employment or other income to show.
+    // nothing else, so there is no self assessment to show.
     PAYE_ONLY: {
-      employers: FIXED_EMPLOYERS, selfEmployment: [], otherIncome: [],
+      ...NONE, employers: FIXED_EMPLOYERS, selfEmployment: [], otherIncome: [],
       taxesPaid: FIXED_TAXES_PAID, retrieved: true,
     },
     // Employment with a business alongside it. This is the shape of the provider's
-    // own sample report, which is where every figure above comes from.
+    // own sample report.
     MIXED: {
-      employers: FIXED_EMPLOYERS, selfEmployment: FIXED_SELF_EMPLOYMENT,
-      otherIncome: FIXED_OTHER_INCOME, taxesPaid: FIXED_TAXES_PAID, retrieved: true,
+      ...NONE, employers: FIXED_EMPLOYERS, selfEmployment: FIXED_SELF_EMPLOYMENT,
+      otherIncome: FIXED_OTHER_INCOME, taxesPaid: FIXED_TAXES_PAID,
+      taxPosition: FIXED_TAX_POSITION, retrieved: true,
     },
     // Self-employed, so there is no employer at all: the provider returns
     // apariResponse as an empty list and everything is in annualIncomeSummaries.
-    //
-    // No employer entry also means no employeeInformation, and that is where the
-    // retrieved name and address come from -- so this report has neither, and
-    // neither does the real one. Worth showing: a verification-of-income product
-    // produced a blank document for this whole class of applicant until the read
-    // side was fixed on 29 September.
     SELF_EMPLOYED: {
-      employers: [], selfEmployment: FIXED_SELF_EMPLOYMENT,
-      otherIncome: FIXED_OTHER_INCOME, taxesPaid: FIXED_TAXES_PAID, retrieved: false,
+      ...NONE, employers: [], selfEmployment: FIXED_SELF_EMPLOYMENT,
+      otherIncome: FIXED_OTHER_INCOME, taxesPaid: FIXED_TAXES_PAID,
+      taxPosition: FIXED_TAX_POSITION, retrieved: true,
     },
-    // A director taking income from their own company. No payroll, because the
-    // money arrives as dividends rather than wages, which is the whole reason
-    // commercial category exists: a payroll lookup finds nothing for them.
-    //
-    // No self-employment either -- they are not a sole trader. What HMRC hold
-    // for them is the other-income side of the annual summaries, which is where
-    // dividend income lands, and the tax totals.
+    // A director taking income from their own company as dividends, with a
+    // rental property. No payroll entry, and no company data: Equifax confirmed
+    // there is no company-level product. What HMRC hold is the director's own
+    // self assessment, with the dividends broken out.
     COMMERCIAL: {
-      employers: [], selfEmployment: [], otherIncome: FIXED_OTHER_INCOME,
-      taxesPaid: FIXED_TAXES_PAID, retrieved: false,
+      ...NONE, employers: [], selfEmployment: [],
+      otherIncome: FIXED_DIRECTOR_OTHER_INCOME, taxesPaid: FIXED_TAXES_PAID,
+      interestDividends: FIXED_INTEREST_DIVIDENDS, property: FIXED_PROPERTY,
+      holidayLettings: FIXED_HOLIDAY_LETTINGS,
+      taxPosition: FIXED_DIRECTOR_TAX_POSITION, retrieved: true,
     },
-    // Employed and a director: a payroll record for the job, and other income
-    // for the dividends.
+    // Employed and a director: a payroll record for the salary, and dividends
+    // on the self assessment.
     RESIDENTIAL_AND_COMMERCIAL: {
-      employers: FIXED_EMPLOYERS, selfEmployment: [],
-      otherIncome: FIXED_OTHER_INCOME, taxesPaid: FIXED_TAXES_PAID, retrieved: true,
+      ...NONE, employers: FIXED_EMPLOYERS, selfEmployment: [],
+      otherIncome: FIXED_DIRECTOR_OTHER_INCOME, taxesPaid: FIXED_TAXES_PAID,
+      interestDividends: FIXED_INTEREST_DIVIDENDS, property: FIXED_PROPERTY,
+      holidayLettings: FIXED_HOLIDAY_LETTINGS,
+      taxPosition: FIXED_DIRECTOR_TAX_POSITION, retrieved: true,
     },
   };
 
@@ -1535,6 +1602,10 @@
       selfEmployment: shape.selfEmployment,
       otherIncome: shape.otherIncome,
       taxesPaid: shape.taxesPaid,
+      interestDividends: shape.interestDividends,
+      property: shape.property,
+      holidayLettings: shape.holidayLettings,
+      taxPosition: shape.taxPosition,
       retrievedName: shape.retrieved ? payload.firstName + " L " + payload.lastName : null,
       retrievedAddress: shape.retrieved
         ? "Apartment " + payload.addressLine1 + ", " + payload.postalCode : null,
@@ -1559,6 +1630,10 @@
       "sec-self-employment": report.selfEmployment.length > 0,
       "sec-other-income": report.otherIncome.length > 0,
       "sec-taxes": report.taxesPaid.length > 0,
+      "sec-interest-dividends": (report.interestDividends || []).length > 0,
+      "sec-property": (report.property || []).length > 0,
+      "sec-holiday-lettings": (report.holidayLettings || []).length > 0,
+      "sec-tax-position": (report.taxPosition || []).length > 0,
     };
   }
 
@@ -1585,11 +1660,10 @@
       // apariResponse / instantResponse: the payroll entries.
       payroll: report.employers.length > 0,
       // The annual income summaries, which are the non-payroll side of what
-      // HMRC hold: self-employment turnover and profit, and other income.
-      // A director's dividends arrive here, under other income, because
-      // Equifax do not expose a dividends field to break them out of it.
-      selfAssessment: (report.selfEmployment || []).length > 0
-        || (report.otherIncome || []).length > 0,
+      // HMRC hold: self-employment, other income, and a director's dividends
+      // and rental income broken out of it.
+      selfAssessment: ["selfEmployment", "otherIncome", "interestDividends", "property",
+        "holidayLettings", "taxPosition"].some(k => (report[k] || []).length > 0),
     };
   }
 
@@ -1623,6 +1697,7 @@
       addressLine1: "12 Quayside", postalCode: "NE1 1AQ",
       email: "marcy.okonjo@example.com", mobile: "07700 900102",
       customerReference: "ABC-1042", employerName: "Northgate Logistics Ltd",
+      workEmail: "m.okonjo@northgate-logistics.example", workPhone: "0191 498 0102",
       verificationType: "VOI", identifyingPurpose: "MO",
     },
     {
@@ -1632,6 +1707,7 @@
       addressLine1: "4 Grainger Street", postalCode: "NE1 5JQ",
       email: "alan.pettifer@example.com", mobile: "07700 900101",
       customerReference: "ABC-1041", employerName: "Northgate Logistics",
+      workEmail: "a.pettifer@northgate-logistics.example", workPhone: "0191 498 0101",
       verificationType: "VOI", identifyingPurpose: "MO",
     },
     {
@@ -1640,7 +1716,8 @@
       firstName: "Dev", lastName: "Ramanathan", dob: "1990-06-21", niNumber: "QQ123458C",
       addressLine1: "9 Pilgrim Street", postalCode: "NE1 6QE",
       email: "dev.ramanathan@example.com", mobile: "07700 900103",
-      customerReference: "ABC-1043", employerName: "",
+      customerReference: "ABC-1043", employerName: "Quayside Joinery",
+      workEmail: "dev@quayside-joinery.example", workPhone: "0191 498 0103",
       verificationType: "VOI", identifyingPurpose: "CC",
     },
     {
@@ -1650,6 +1727,7 @@
       addressLine1: "22 Dean Street", postalCode: "NE1 1PG",
       email: "josie.hartnell@example.com", mobile: "07700 900104",
       customerReference: "ABC-1044", employerName: "",
+      workEmail: "josie.hartnell@work.example", workPhone: "0191 498 0104",
       verificationType: "VOE", identifyingPurpose: "ES",
     },
     {
@@ -1659,6 +1737,7 @@
       addressLine1: "8 Westgate Road", postalCode: "NE1 4SG",
       email: "imran.chaudhary@example.com", mobile: "07700 900105",
       customerReference: "ABC-1046", employerName: "Northgate Logistics Ltd",
+      workEmail: "imran@northgate-logistics.example", workPhone: "0191 498 0105",
       queryCategory: "COMMERCIAL", verificationType: "VOI", identifyingPurpose: "MO",
     },
     {
@@ -1668,6 +1747,7 @@
       addressLine1: "47 Grey Street", postalCode: "NE1 6EE",
       email: "rosalind.whitaker@example.com", mobile: "07700 900106",
       customerReference: "ABC-1047", employerName: "Brightwell Retail Ltd",
+      workEmail: "r.whitaker@brightwell-retail.example", workPhone: "0191 498 0106",
       queryCategory: "COMMERCIAL", verificationType: "VOI", identifyingPurpose: "MO",
     },
   ];
@@ -1794,8 +1874,8 @@
         ["Date of Birth", new Date(order.payload.dob).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })],
         ["Address", order.payload.addressLine1 + ", " + order.payload.postalCode],
         ["Current Employment -- Employer Name", order.payload.employerName || "-"],
-        ["Current Employment -- Work Email", "-"],
-        ["Current Employment -- Work Phone Number", "-"],
+        ["Current Employment -- Work Email", order.payload.workEmail || "-"],
+        ["Current Employment -- Work Phone Number", order.payload.workPhone || "-"],
       ],
     });
     y = doc.lastAutoTable.finalY + 22;
@@ -1829,8 +1909,8 @@
 
       doc.autoTable({
         startY: y, theme: "grid",
-        head: [["Start Date/End Date", "Total Taxable Income", "Total Tax Deduction", "Total National Insurance Deduction"]],
-        body: entry.annual.map(a => [a.period, "£" + a.taxableIncome.toLocaleString(), "£" + a.taxDeduction.toLocaleString(), "£" + a.niDeduction.toLocaleString()]),
+        head: [["Year", "Total Gross Income"]],
+        body: entry.annual.map(a => [a.period, fmtMoney(a.taxableIncome)]),
         styles: { font: "helvetica", fontSize: 9, textColor: INK, lineColor: BORDER },
         headStyles: { fillColor: LIGHT_ROW, textColor: INK, fontStyle: "bold" },
         margin: { left: marginX, right: marginX },
@@ -1840,8 +1920,8 @@
       if (entry.payPeriod.length) {
         doc.autoTable({
           startY: y, theme: "grid",
-          head: [["Pay Date", "Taxable Income", "Tax Deduction", "National Insurance Deduction"]],
-          body: entry.payPeriod.map(p => [p.payDate, "£" + p.taxableIncome.toLocaleString(), "£" + p.taxDeduction.toLocaleString(), "£" + p.niDeduction.toLocaleString()]),
+          head: [["Pay Date", "Gross Earnings", "Tax Deduction", "National Insurance Deduction"]],
+          body: entry.payPeriod.map(p => [p.payDate, fmtMoney(p.taxableIncome), fmtMoney(p.taxDeduction), fmtMoney(p.niDeduction)]),
           styles: { font: "helvetica", fontSize: 9, textColor: INK, lineColor: BORDER },
           headStyles: { fillColor: LIGHT_ROW, textColor: INK, fontStyle: "bold" },
           margin: { left: marginX, right: marginX },
@@ -1876,25 +1956,24 @@
       y = doc.lastAutoTable.finalY + 22;
     }
 
-    const money = (n) => "£" + n.toLocaleString();
-
-    tableSection(
-      "sec-self-employment", "Self-Employment Income",
-      ["Year", "Business Name", "Turnover", "Resulting Profit or Loss"],
-      order.report.selfEmployment.map(s => [s.year, s.business, money(s.turnover), money(s.resultingProfitOrLoss)]),
-    );
-
-    tableSection(
-      "sec-other-income", "Other Sources of Income",
-      ["Year", "State Pension", "Other Pensionable Income", "Other Income"],
-      order.report.otherIncome.map(o => [o.year, money(o.statePension), money(o.otherPensionable), money(o.otherIncome)]),
-    );
-
-    tableSection(
-      "sec-taxes", "Taxes Paid",
-      ["Year", "Total Annual Tax Deduction", "Total Annual National Insurance Deduction"],
-      order.report.taxesPaid.map(t => [t.year, money(t.totalTax), money(t.totalNI)]),
-    );
+    // Same columns, same order and same notes as the page: both read SECTION_TABLES.
+    [
+      ["sec-self-employment", "Self-Employment Income", "selfEmployment"],
+      ["sec-other-income", "Other Sources of Income", "otherIncome"],
+      ["sec-interest-dividends", "Interest and Dividends", "interestDividends"],
+      ["sec-property", "UK Property Income", "property"],
+      ["sec-holiday-lettings", "Furnished Holiday Lettings", "holidayLettings"],
+      ["sec-taxes", "Taxes Paid", "taxesPaid"],
+      ["sec-tax-position", "Self Assessment Tax Position", "taxPosition"],
+    ].forEach(([key, heading, field]) => {
+      const spec = SECTION_TABLES[field];
+      tableSection(key, heading, spec.head, (order.report[field] || []).map(spec.row).map(r => r.map(String)));
+      if (show[key] && spec.note) {
+        doc.setFont("helvetica", "italic"); doc.setFontSize(8); doc.setTextColor(MUTED);
+        doc.text(doc.splitTextToSize(spec.note, doc.internal.pageSize.getWidth() - marginX * 2), marginX, y - 12);
+        y += 8;
+      }
+    });
 
     ensureSpace(40);
     doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(BRAND);
@@ -1979,6 +2058,8 @@
       mobile: document.getElementById("mobile").value,
       customerReference: document.getElementById("customerReference").value,
       employerName: document.getElementById("employerName").value,
+      workEmail: document.getElementById("workEmail").value,
+      workPhone: document.getElementById("workPhone").value,
       queryCategory: document.getElementById("queryCategory").value,
       verificationType: document.getElementById("verificationType").value,
       identifyingPurpose: document.getElementById("identifyingPurpose").value,
@@ -2051,7 +2132,7 @@
   const applicantSelect = document.getElementById("demoApplicant");
   const APPLICANT_FIELDS = [
     "firstName", "lastName", "dob", "niNumber", "addressLine1", "postalCode",
-    "email", "mobile", "customerReference", "employerName",
+    "email", "mobile", "customerReference", "employerName", "workEmail", "workPhone",
     "queryCategory", "verificationType", "identifyingPurpose",
   ];
 
@@ -2194,53 +2275,96 @@
         <span class="status-badge">First: ${entry.firstPayDate} · Last: ${entry.lastPayDate}</span>
       </p>
       <div class="table-scroll"><table>
-        <thead><tr><th>Start Date/End Date</th><th>Total Taxable Income</th><th>Total Tax Deduction</th><th>Total National Insurance Deduction</th></tr></thead>
+        <thead><tr><th>Year</th><th>Total Gross Income</th></tr></thead>
         <tbody>${entry.annual.map(a =>
-          `<tr><td>${a.period}</td><td>£${a.taxableIncome.toLocaleString()}</td><td>£${a.taxDeduction.toLocaleString()}</td><td>£${a.niDeduction.toLocaleString()}</td></tr>`
+          `<tr><td>${a.period}</td><td>${fmtMoney(a.taxableIncome)}</td></tr>`
         ).join("")}</tbody>
       </table></div>
       ${entry.payPeriod.length ? `
       <div class="table-scroll" style="margin-top:14px"><table>
-        <thead><tr><th>Pay Date</th><th>Taxable Income</th><th>Tax Deduction</th><th>National Insurance Deduction</th></tr></thead>
+        <thead><tr><th>Pay Date</th><th>Gross Earnings</th><th>Tax Deduction</th><th>National Insurance Deduction</th></tr></thead>
         <tbody>${entry.payPeriod.map(p =>
-          `<tr><td>${p.payDate}</td><td>£${p.taxableIncome.toLocaleString()}</td><td>£${p.taxDeduction.toLocaleString()}</td><td>£${p.niDeduction.toLocaleString()}</td></tr>`
+          `<tr><td>${p.payDate}</td><td>${fmtMoney(p.taxableIncome)}</td><td>${fmtMoney(p.taxDeduction)}</td><td>${fmtMoney(p.niDeduction)}</td></tr>`
         ).join("")}</tbody>
       </table></div>` : ""}
       <p class="employer-note">Note: The date of payment as it was reported to HMRC. Taxable Income is defined as Gross Income less any pre-tax deductions. The First and Last Pay Date is an indication of time with the employer.</p>
     `).join("");
   }
 
-  function renderSelfEmploymentHtml(items) {
+  // "-" for a figure HMRC do not hold, as the real report prints it. A director
+  // has no state pension, and a business with no losses brought forward has none.
+  function fmtMoney(n) {
+    if (n === null || n === undefined) return "-";
+    return "£" + n.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function taxPositionWords(n) {
+    if (n > 0) return "Tax owed";
+    if (n < 0) return "Tax overpaid";
+    return "Nil";
+  }
+
+  function tableHtml(head, rows) {
     return `
       <div class="table-scroll"><table>
-        <thead><tr><th>Year</th><th>Business Name</th><th>Turnover</th><th>Resulting Profit or Loss</th></tr></thead>
-        <tbody>${items.map(s =>
-          `<tr><td>${s.year}</td><td>${s.business}</td><td>£${s.turnover.toLocaleString()}</td><td>£${s.resultingProfitOrLoss.toLocaleString()}</td></tr>`
-        ).join("")}</tbody>
+        <thead><tr>${head.map(h => `<th>${h}</th>`).join("")}</tr></thead>
+        <tbody>${rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join("")}</tr>`).join("")}</tbody>
       </table></div>
     `;
   }
 
-  function renderOtherIncomeHtml(items) {
-    return `
-      <div class="table-scroll"><table>
-        <thead><tr><th>Year</th><th>State Pension</th><th>Other Pensionable Income</th><th>Other Income</th></tr></thead>
-        <tbody>${items.map(o =>
-          `<tr><td>${o.year}</td><td>£${o.statePension.toLocaleString()}</td><td>£${o.otherPensionable.toLocaleString()}</td><td>£${o.otherIncome.toLocaleString()}</td></tr>`
-        ).join("")}</tbody>
-      </table></div>
-    `;
+  // Column sets shared by the page and the PDF, so the two cannot drift.
+  const SECTION_TABLES = {
+    selfEmployment: {
+      head: ["Year", "Business Name", "Turnover", "Expenses", "Losses Brought Forward", "Resulting Profit or Loss"],
+      row: s => [s.year, s.business, fmtMoney(s.turnover), fmtMoney(s.expenses), fmtMoney(s.carriedForwardLosses), fmtMoney(s.resultingProfitOrLoss)],
+    },
+    otherIncome: {
+      head: ["Year", "State Pension", "Other Pensionable Income", "Other Income"],
+      row: o => [o.year, fmtMoney(o.statePension), fmtMoney(o.otherPensionable), fmtMoney(o.otherIncome)],
+      note: "Other Income is HMRC's total of interest, dividends and property income, which are broken down below where HMRC hold the detail.",
+    },
+    interestDividends: {
+      head: ["Year", "Taxed UK Interest", "Untaxed UK Interest", "UK Company Dividends", "Other Dividends"],
+      row: d => [d.year, fmtMoney(d.taxedInterest), fmtMoney(d.untaxedInterest), fmtMoney(d.ukDividends), fmtMoney(d.otherDividends)],
+    },
+    property: {
+      head: ["Year", "Properties", "Total Rents", "Expenses", "Finance Costs", "Losses Brought Forward", "Adjusted Profit or Loss"],
+      row: p => [p.year, p.count, fmtMoney(p.rents), fmtMoney(p.expenses), fmtMoney(p.financeCosts), fmtMoney(p.broughtForwardLoss), fmtMoney(p.profitOrLoss)],
+    },
+    holidayLettings: {
+      head: ["Year", "Income", "Expenses", "Adjusted Profit or Loss"],
+      row: h => [h.year, fmtMoney(h.income), fmtMoney(h.expenses), fmtMoney(h.profitOrLoss)],
+    },
+    taxesPaid: {
+      head: ["Year", "Total Annual Tax Deduction", "Total Annual National Insurance Deduction"],
+      row: x => [x.year, fmtMoney(x.totalTax), fmtMoney(x.totalNI)],
+    },
+    taxPosition: {
+      head: ["Year", "Position", "Amount"],
+      row: x => [x.year, taxPositionWords(x.taxDueOrOverpaid), fmtMoney(Math.abs(x.taxDueOrOverpaid))],
+      note: "From HMRC's tax calculation for the year. A tax year with no Self Assessment return filed does not appear in this report.",
+    },
+  };
+
+  function sectionHtml(key, items) {
+    const spec = SECTION_TABLES[key];
+    const rows = (items || []).map(spec.row);
+    return tableHtml(spec.head, rows) + (spec.note ? `<p class="employer-note">${spec.note}</p>` : "");
   }
 
-  function renderTaxesPaidHtml(items) {
-    return `
-      <div class="table-scroll"><table>
-        <thead><tr><th>Year</th><th>Total Annual Tax Deduction</th><th>Total Annual National Insurance Deduction</th></tr></thead>
-        <tbody>${items.map(t =>
-          `<tr><td>${t.year}</td><td>£${t.totalTax.toLocaleString()}</td><td>£${t.totalNI.toLocaleString()}</td></tr>`
-        ).join("")}</tbody>
-      </table></div>
-    `;
+  function renderSelfEmploymentHtml(items) { return sectionHtml("selfEmployment", items); }
+
+  function renderOtherIncomeHtml(items) { return sectionHtml("otherIncome", items); }
+
+  function renderTaxesPaidHtml(items) { return sectionHtml("taxesPaid", items); }
+
+  // The four sections added on 8 October 2026, filled for either view prefix.
+  function renderSelfAssessmentExtras(prefix, report) {
+    document.getElementById(prefix + "-interest-dividends").innerHTML = sectionHtml("interestDividends", report.interestDividends);
+    document.getElementById(prefix + "-property").innerHTML = sectionHtml("property", report.property);
+    document.getElementById(prefix + "-holiday-lettings").innerHTML = sectionHtml("holidayLettings", report.holidayLettings);
+    document.getElementById(prefix + "-tax-position").innerHTML = sectionHtml("taxPosition", report.taxPosition);
   }
 
   function renderResult(order) {
@@ -2254,6 +2378,8 @@
     document.getElementById("r-address").textContent = payload.addressLine1 + ", " + payload.postalCode;
     document.getElementById("r-refnum").textContent = payload.customerReference || "-";
     document.getElementById("r-employer").textContent = payload.employerName || "-";
+    document.getElementById("r-work-email").textContent = payload.workEmail || "-";
+    document.getElementById("r-work-phone").textContent = payload.workPhone || "-";
     document.getElementById("r-retrieved-name").textContent = report.retrievedName || "-";
     document.getElementById("r-retrieved-address").textContent = report.retrievedAddress || "-";
     applyDocumentTitle("r-doc-title", report);
@@ -2263,6 +2389,7 @@
     document.getElementById("r-self-employment").innerHTML = renderSelfEmploymentHtml(report.selfEmployment);
     document.getElementById("r-other-income").innerHTML = renderOtherIncomeHtml(report.otherIncome);
     document.getElementById("r-taxes-paid").innerHTML = renderTaxesPaidHtml(report.taxesPaid);
+    renderSelfAssessmentExtras("r", report);
   }
 
   document.getElementById("download-btn").addEventListener("click", () => {
@@ -2564,7 +2691,9 @@
         // reserved drama range -- neither can belong to a real person.
         niNumber: "QQ" + (123400 + i) + "C",
         customerReference: "ABC-" + (1040 + i),
-        employerName: ["KarolReality", "KAROLINA HEREY LTD", ""][i % 3],
+        employerName: ["KarolReality", "KAROLINA HEREY LTD", "Tyne Valley Crafts"][i % 3],
+        workEmail: firstName.toLowerCase() + "@work.example",
+        workPhone: "0191 498 0" + (110 + i),
         addressLine1: (12 + i) + " Quayside",
         postalCode: "NE1 " + (1 + i) + "AQ",
         email: firstName.toLowerCase() + "." + lastName.toLowerCase() + "@example.com",
@@ -2820,9 +2949,12 @@
     document.getElementById("pd-self-employment").innerHTML = renderSelfEmploymentHtml(report.selfEmployment);
     document.getElementById("pd-other-income").innerHTML = renderOtherIncomeHtml(report.otherIncome);
     document.getElementById("pd-taxes-paid").innerHTML = renderTaxesPaidHtml(report.taxesPaid);
+    renderSelfAssessmentExtras("pd", report);
 
     document.getElementById("pd-refnum").textContent = payload.customerReference || "-";
     document.getElementById("pd-employer").textContent = payload.employerName || "-";
+    document.getElementById("pd-work-email").textContent = payload.workEmail || "-";
+    document.getElementById("pd-work-phone").textContent = payload.workPhone || "-";
     applyDocumentTitle("pd-doc-title", report);
     applyReportSections("pd", report);
     document.getElementById("pd-download-btn").onclick = () => downloadReportPdf(order);

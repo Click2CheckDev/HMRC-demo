@@ -75,8 +75,8 @@ the order form is not what a customer is there to read.
 | **Alan Pettifer** | An instant match in Payroll. No HMRC, no consent, report in one step, and this happens for 15–20% of applicants. |
 | **Dev Ramanathan** | Self-employed. Consent is still needed, and the report that comes back has **no employment section at all**. |
 | **Josie Hartnell** | No match at Payroll or HMRC. Closes as `FAILED`. Usually an NI number, date of birth or surname that does not match what is held. |
-| **Imran Chaudhary** | Commercial. A director paid in dividends rather than wages, so a payroll lookup finds nothing. Follows a **company link** of his own, and the report comes back with dividends and shareholdings instead of employment. |
-| **Rosalind Whitaker** | Residential **and** commercial. Employed and a director, so both apply: she receives **two links** and has to follow both. |
+| **Imran Chaudhary** | Commercial. A director paid in dividends rather than wages, with a rental property, so a payroll lookup finds nothing. Same single link as everyone else; the report comes back with his dividends, property income and tax position instead of employment. |
+| **Rosalind Whitaker** | Residential **and** commercial. Employed and a director: one link, and a report with her salary from payroll alongside her dividends from self assessment. |
 
 An applicant who never gets round to it is not shown as a test identity: nothing
 Click2Check does changes that outcome, and the `EXPIRED` status is already in the
@@ -91,13 +91,17 @@ about that particular person:
   other-income sections, because there is nothing to put in them.
 - **Employment and a business** — the shape of the provider's own sample report,
   which is where the employment and self-assessment figures come from.
-- **Self-employed** — no employment section, and no *Retrieved Personal
-  Information* section either. A sole trader has no employer record, and that
-  record is the only thing HMRC enrich the name and address from.
-- **Commercial** — dividends and shareholdings, and no employment at all, because
-  a director paid in dividends has no payroll record to find.
-- **Residential and commercial** — employment, dividends and shareholdings
-  together.
+- **Self-employed** — no employment section. Self-employment, other income and
+  the self assessment tax position.
+- **Commercial** — interest and dividends, UK property income and the tax
+  position, and no employment at all, because a director paid in dividends has
+  no payroll record to find.
+- **Residential and commercial** — employment, plus the director's dividends and
+  property income.
+
+Every shape shows *Retrieved Personal Information*. Equifax confirmed on
+8 October 2026 that a live report returns HMRC's record of whoever signed in at
+the Government Gateway, self assessment only applicants included.
 
 Empty sections are **absent, not blank**. A heading over an empty table reads as
 missing data; a section that is not there reads as not applicable, which is what
@@ -198,57 +202,43 @@ The broker's own need did not disappear with the card. The consent link, and a
 button to copy it, are on the case in the list — which is where a broker goes when
 an applicant says they never received it.
 
-### The commercial journey is a separate link
-
-This is the part most worth understanding, and the newest.
+### What "commercial" means
 
 A director typically takes income as **dividends rather than wages**, so a payroll
-lookup finds nothing at all. The company's records sit behind the **company's own
-Government Gateway account**, not the director's personal one. So it is a separate
-authorisation on a separate link, and the report comes back with different
-sections:
+lookup finds nothing at all. What HMRC hold for them is their own self
+assessment, and that is what the report shows: `interestAndDividends`
+(including `ukCompanyDividends`), `ukProperty`, `furnishedHolidayLettings` and
+the year's tax position, alongside the other-income total those make up.
 
-| | Residential | Commercial |
-|---|---|---|
-| Link | `/individual/…` | `/company/…` |
-| Account label | *Gateway Account — Personal* | *Gateway Account — Commercial* |
-| Signs in as | themselves | the organisation |
-| Report shows | employment, self-employment, other income | **dividends, shareholdings** |
+Equifax confirmed on 8 October 2026 that there is **no company-level product**.
+Every order is for one person, there is no company link and no organisation
+Government Gateway account, and nothing about the company itself comes back:
+no company name against a dividend, and no shareholdings, which are Companies
+House records rather than HMRC's. An earlier version of this demo showed a
+separate company link and a Shareholdings table; both were invented and have
+been removed.
 
-Somebody who is **both** employed and a director gets **two links in one email**
-and has to follow both. The demo holds this: authorising one marks it done and
-returns them to the inbox for the other, and the case does not complete until both
-are in. That is the behaviour the separate link exists to represent, and it is the
-thing a client will plan around.
+**`query_category` is a reporting label.** It is never sent to the data
+provider, nothing in the gateway branches on it, and its only jobs are
+filtering the case list and splitting the counts on the usage endpoint for
+billing. Residential and commercial cases run the same check; what differs is
+the person's own records.
 
-### What Residential and Commercial do and do not share
+There is **no manual review**. Nothing at Click2Check sits between the applicant
+and their report.
 
-Two different things get called the same name here, and it is worth separating
-them.
+### What the report figures follow
 
-**`query_category` is a reporting label.** It is never sent to the data provider,
-nothing in the gateway branches on it, and its only jobs are filtering the case
-list and splitting the counts on the usage endpoint for billing. That has not
-changed.
+Each of these is what Equifax told us in writing on 8 October 2026:
 
-**The commercial journey is genuinely different**, as above: its own link, the
-organisation's Government Gateway account, and dividends and shareholdings in
-place of employment. An earlier version of this demo said commercial and
-residential were the same in every respect. That was true of the label and wrong
-about the journey.
-
-There is still **no manual review**. An earlier version held commercial cases at
-"pending review" and never produced a report for them, which was invented rather
-than observed. Nothing at Click2Check sits between the applicant and their report.
-
-> **For whoever maintains this:** the commercial journey is **not implemented in
-> the HMRC gateway yet.** The gateway sends an individual's NI number, date of
-> birth, name and address, and has no company path. The data provider has not
-> documented one either — their onboarding document and sample report contain no
-> reference to organisation accounts, self-assessment or scope selection. The
-> journey shown here is C2C's product direction, specified on 2 October 2026, and
-> the dividend and shareholding figures are the only invented numbers in this
-> demo. Everything else comes from the provider's own sample.
+- **Pay periods**: the three most recent, for the current employment only.
+  Earlier employments show yearly gross totals.
+- **Coverage**: the current tax year and the previous five.
+- **Tax position**: `taxDueOrOverpaid` is positive when tax is owed and negative
+  when it was overpaid. The report says which in words.
+- **A missing year** means no self assessment return was filed for it. It is
+  never zero income.
+- **The consent link** lasts five days.
 
 ### Data retention and deletion
 
@@ -368,9 +358,9 @@ real case can take rather than only the one that succeeds instantly. In October
 the outcome selector was replaced by a list of test applicants, and the retention
 section was added.
 
-Every figure in the report comes from the data provider's own sample report,
-except the dividends and shareholdings, which are invented because they gave us
-no commercial example. Only the names
+The employment and self-employment figures come from the data provider's own
+sample report. The director's dividend, property and tax-position figures are
+invented, but every field they sit in is one the live response carries. Only the names
 are substituted: applicants, employers and businesses are invented, the
 National Insurance numbers use the `QQ` prefix HMRC never issues, and the mobile
 numbers are in Ofcom's reserved drama range. None of it can belong to a real
