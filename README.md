@@ -71,8 +71,8 @@ the order form is not what a customer is there to read.
 
 | Applicant | What their records produce |
 |---|---|
-| **Marcy Okonjo** | Payroll does not hold them, so the request goes to HMRC and waits on the applicant. **This is the usual case** — around four in five. |
-| **Alan Pettifer** | An instant match in Payroll. No HMRC, no consent, report in one step, and this happens for 15–20% of applicants. |
+| **Marcy Okonjo** | Payroll does not hold them, so the request goes to HMRC and waits on the applicant. Equifax could not match them, so the Government Gateway route is used. |
+| **Alan Pettifer** | An instant match in Payroll. No HMRC, no consent, report in one step. |
 | **Dev Ramanathan** | Self-employed. Consent is still needed, and the report that comes back has **no employment section at all**. |
 | **Josie Hartnell** | No match at Payroll or HMRC. Closes as `FAILED`. Usually an NI number, date of birth or surname that does not match what is held. |
 | **Imran Chaudhary** | Commercial. A director paid in dividends rather than wages, with a rental property, so a payroll lookup finds nothing. Same single link as everyone else; the report comes back with his dividends, property income and tax position instead of employment. |
