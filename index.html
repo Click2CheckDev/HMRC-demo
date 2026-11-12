@@ -802,6 +802,24 @@
   .danger-zone summary:hover { color: var(--brand-ink); }
   .danger-zone .panel { margin: 12px 0 0; border-color: rgba(230,23,88,0.3); background: rgba(230,23,88,0.04); }
 
+  /* Use the width of the screen: cards fill the space beside the sidebar instead of a narrow column,
+     and on a wide screen the report's first three sections sit in two columns. */
+  .card { max-width: 820px; }
+  .card.wide, .portal-card { max-width: 1240px; }
+  .card.centered { max-width: 640px; }
+  main { padding: 36px 40px; }
+  @media (min-width: 1100px) {
+    .report-top { display: grid; grid-template-columns: 1fr 1fr; column-gap: 48px; align-items: start; }
+    .report-top .sec-order { grid-column: 1; grid-row: 1; }
+    .report-top .sec-retrieved { grid-column: 1; grid-row: 2; }
+    .report-top .sec-collected { grid-column: 2; grid-row: 1 / span 2; }
+    .detail-grid { grid-template-columns: auto 1fr auto 1fr; }
+    .stat-row { gap: 18px; }
+    .employer-tables { display: grid; grid-template-columns: minmax(260px, 1fr) 2fr; gap: 20px; align-items: start; }
+    .employer-tables .table-scroll.pay-dates { margin-top: 0; }
+  }
+  .employer-tables .pay-dates { margin-top: 14px; }
+
   @media (max-width: 820px) {
     .table-scroll { overflow-x: auto; }
     .case-table .tracking { white-space: normal; overflow-wrap: anywhere; }
@@ -1165,7 +1183,8 @@
     <!-- Named from the report's contents, not hardcoded -- see documentTitle. -->
     <h1 class="title"><span id="r-doc-title"></span> <span class="doc-title-demo">Demo data</span></h1>
 
-    <div class="section">
+    <div class="report-top">
+    <div class="section sec-order">
       <h2>Order Information</h2>
       <div class="row"><span class="label">Report Date</span><span class="value" id="r-report-date"></span></div>
       <div class="row"><span class="label">Permissible Purpose</span><span class="value" id="r-purpose"></span></div>
@@ -1173,7 +1192,7 @@
       <div class="row"><span class="label">Customer Reference Number</span><span class="value" id="r-refnum">-</span></div>
     </div>
 
-    <div class="section">
+    <div class="section sec-collected">
       <h2>Collected Personal Information</h2>
       <p class="section-note">The following personal information was collected as part of the order request</p>
       <div class="row"><span class="label">Name</span><span class="value" id="r-name"></span></div>
@@ -1184,10 +1203,11 @@
       <div class="row"><span class="label">Current Employment – Work Phone Number</span><span class="value" id="r-work-phone">-</span></div>
     </div>
 
-    <div class="section" id="r-sec-retrieved">
+    <div class="section sec-retrieved" id="r-sec-retrieved">
       <h2>Retrieved Personal Information</h2>
       <div class="row"><span class="label">Name</span><span class="value" id="r-retrieved-name"></span></div>
       <div class="row"><span class="label">Address</span><span class="value" id="r-retrieved-address"></span></div>
+    </div>
     </div>
 
     <div class="section" id="r-sec-payroll">
@@ -1380,7 +1400,8 @@
          document title at all, so the downloaded file announced itself as
          something the page it came from never named. -->
     <h2 class="doc-title"><span id="pd-doc-title"></span> <span class="doc-title-demo">Demo data</span></h2>
-    <div class="section">
+    <div class="report-top">
+    <div class="section sec-order">
       <h2>Order Information</h2>
       <div class="row"><span class="label">Report Date</span><span class="value" id="pd-report-date"></span></div>
       <div class="row"><span class="label">Permissible Purpose</span><span class="value" id="pd-purpose"></span></div>
@@ -1388,7 +1409,7 @@
       <div class="row"><span class="label">Customer Reference Number</span><span class="value" id="pd-refnum">-</span></div>
     </div>
 
-    <div class="section">
+    <div class="section sec-collected">
       <h2>Collected Personal Information</h2>
       <p class="section-note">The following personal information was collected as part of the order request</p>
       <div class="row"><span class="label">Name</span><span class="value" id="pd-name"></span></div>
@@ -1399,10 +1420,11 @@
       <div class="row"><span class="label">Current Employment – Work Phone Number</span><span class="value" id="pd-work-phone">-</span></div>
     </div>
 
-    <div class="section" id="pd-sec-retrieved">
+    <div class="section sec-retrieved" id="pd-sec-retrieved">
       <h2>Retrieved Personal Information</h2>
       <div class="row"><span class="label">Name</span><span class="value" id="pd-retrieved-name"></span></div>
       <div class="row"><span class="label">Address</span><span class="value" id="pd-retrieved-address"></span></div>
+    </div>
     </div>
 
     <div class="section" id="pd-sec-payroll">
@@ -2414,6 +2436,7 @@
       <p class="employer">${entry.employerName}
         <span class="status-badge">First: ${entry.firstPayDate} · Last: ${entry.lastPayDate}</span>
       </p>
+      <div class="employer-tables">
       <div class="table-scroll"><table class="money compact">
         <thead><tr><th>Year</th><th>Total Gross Income</th></tr></thead>
         <tbody>${entry.annual.map(a =>
@@ -2421,12 +2444,13 @@
         ).join("")}</tbody>
       </table></div>
       ${entry.payPeriod.length ? `
-      <div class="table-scroll" style="margin-top:14px"><table class="money">
+      <div class="table-scroll pay-dates"><table class="money">
         <thead><tr><th>Pay Date</th><th>Gross Earnings</th><th>Tax Deduction</th><th>National Insurance Deduction</th></tr></thead>
         <tbody>${entry.payPeriod.map(p =>
           `<tr><td>${p.payDate}</td><td>${fmtMoney(p.taxableIncome)}</td><td>${fmtMoney(p.taxDeduction)}</td><td>${fmtMoney(p.niDeduction)}</td></tr>`
         ).join("")}</tbody>
       </table></div>` : ""}
+      </div>
       <p class="employer-note">Note: The date of payment as it was reported to HMRC. Taxable Income is defined as Gross Income less any pre-tax deductions. The First and Last Pay Date is an indication of time with the employer.</p>
     `).join("");
   }
